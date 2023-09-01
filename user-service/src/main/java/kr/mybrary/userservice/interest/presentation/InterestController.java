@@ -25,7 +25,7 @@ public class InterestController {
     private final InterestService interestService;
 
     @GetMapping("/interest-categories")
-    public ResponseEntity<SuccessResponse> getInterestCategories() {
+    public ResponseEntity getInterestCategories() {
         return ResponseEntity.ok().body(
                 SuccessResponse.of(HttpStatus.OK.toString(), "카테고리별 관심사를 모두 조회했습니다.",
                         interestService.getInterestCategories())
@@ -33,7 +33,7 @@ public class InterestController {
     }
 
     @GetMapping("/users/{userId}/interests")
-    public ResponseEntity<SuccessResponse> getUserInterests(@PathVariable("userId") String userId) {
+    public ResponseEntity getUserInterests(@PathVariable("userId") String userId) {
         return ResponseEntity.ok().body(
                 SuccessResponse.of(HttpStatus.OK.toString(), "사용자의 관심사를 모두 조회했습니다.",
                         interestService.getUserInterests(userId))
@@ -41,11 +41,9 @@ public class InterestController {
     }
 
     @PutMapping("/users/{userId}/interests")
-    public ResponseEntity<SuccessResponse> updateUserInterests(
-            @PathVariable("userId") String userId,
-            @RequestHeader("USER-ID") String loginId,
-            @RequestBody UserInterestUpdateRequest request) {
-
+    public ResponseEntity updateUserInterests(@PathVariable("userId") String userId,
+                                              @RequestHeader("USER-ID") String loginId,
+                                              @RequestBody UserInterestUpdateRequest request) {
         return ResponseEntity.ok().body(
                 SuccessResponse.of(HttpStatus.OK.toString(), "사용자의 관심사를 수정했습니다.",
                         interestService.updateUserInterests(
@@ -54,17 +52,13 @@ public class InterestController {
     }
 
     @GetMapping("/interests/book-recommendations/{type}")
-    public ResponseEntity<SuccessResponse> getInterestsAndBookRecommendations(
-            @RequestHeader("USER-ID") String userId,
-            @PathVariable String type,
-            @RequestParam(value = "page", required = false, defaultValue = "1") int page) {
-
-        UserInterestAndBookRecommendationsServiceRequest request =
-                UserInterestAndBookRecommendationsServiceRequest.of(userId, type, page);
-
+    public ResponseEntity getInterestsAndBookRecommendations(@RequestHeader("USER-ID") String userId,
+                                                             @PathVariable String type,
+                                                             @RequestParam(value = "page", required = false, defaultValue = "1") int page) {
         return ResponseEntity.ok().body(
                 SuccessResponse.of(HttpStatus.OK.toString(), "사용자의 모든 관심사와 그 중 하나의 관심사에 대한 추천 도서를 조회했습니다.",
-                        interestService.getInterestsAndBookRecommendations(request))
+                        interestService.getInterestsAndBookRecommendations(
+                                UserInterestAndBookRecommendationsServiceRequest.of(userId, type, page)))
         );
     }
 }
