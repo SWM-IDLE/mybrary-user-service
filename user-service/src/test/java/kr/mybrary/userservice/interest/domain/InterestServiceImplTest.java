@@ -136,7 +136,7 @@ class InterestServiceImplTest {
         assertThatThrownBy(() -> interestService.getUserInterests(LOGIN_ID))
                 .isInstanceOf(UserNotFoundException.class)
                 .hasFieldOrPropertyWithValue("status", 404)
-                .hasFieldOrPropertyWithValue("errorCode", "U-05")
+                .hasFieldOrPropertyWithValue("errorCode", "U-01")
                 .hasFieldOrPropertyWithValue("errorMessage", "존재하지 않는 사용자입니다.");
 
         verify(userService).getUserResponse(LOGIN_ID);
@@ -215,7 +215,7 @@ class InterestServiceImplTest {
         assertThatThrownBy(() -> interestService.updateUserInterests(serviceRequest))
                 .isInstanceOf(UserNotFoundException.class)
                 .hasFieldOrPropertyWithValue("status", 404)
-                .hasFieldOrPropertyWithValue("errorCode", "U-05")
+                .hasFieldOrPropertyWithValue("errorCode", "U-01")
                 .hasFieldOrPropertyWithValue("errorMessage", "존재하지 않는 사용자입니다.");
 
         verify(userService).getUserResponse(LOGIN_ID);
