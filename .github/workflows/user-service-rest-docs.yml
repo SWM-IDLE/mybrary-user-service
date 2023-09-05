@@ -1,16 +1,11 @@
 name: 'user-service api specification to s3'
 
 on:
-  push:
-    branches:
-      - master
-    paths:
-      - 'backend/user-service/**'
   pull_request:
     branches:
-      - master
+      - develop
     paths:
-      - 'backend/user-service/**'
+      - 'user-service/**'
 
 jobs:
   build:
@@ -28,7 +23,7 @@ jobs:
       - name: Setup Application Yaml
         uses: microsoft/variable-substitution@v1
         with:
-          files: backend/user-service/src/main/resources/application.yml
+          files: user-service/src/main/resources/application.yml
         env:
           spring.data.redis.host: ${{ secrets.DOCS_SERVER_US_REDIS_HOST }}
           spring.security.oauth2.client.registration.google.client-id: ${{ secrets.GOOGLE_CLIENT_ID }}
@@ -44,23 +39,23 @@ jobs:
       - name: Setup Bootstrap Yaml
         uses: microsoft/variable-substitution@v1
         with:
-          files: backend/user-service/src/main/resources/bootstrap.yml
+          files: user-service/src/main/resources/bootstrap.yml
         env:
           spring.profiles.active: test
           
       - name: Create Output Directory
-        working-directory: backend/user-service 
+        working-directory: user-service
         run: |
             mkdir -p build/resources/main/static/docs
             echo "test" > build/resources/main/static/docs/user-service.json
                   
       - name: Run Openapi3
-        working-directory: backend/user-service
+        working-directory: user-service
         run: |
           ./gradlew openapi3
           
       - name: Upload OpenApi Specification to S3
-        working-directory: backend/user-service
+        working-directory: user-service
         run: |
           aws s3 cp build/resources/main/static/docs/user-service.json s3://mybrary-swagger-ui/docs/user-service.json
         env:
