@@ -11,6 +11,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -29,7 +31,7 @@ public class AmazonS3Service implements StorageService {
             s3Template.upload(bucketName, path, multipartFile.getInputStream(), generateObjectMetadata(multipartFile));
         } catch (S3Exception e) {
             throw new StorageClientException();
-        } catch (Exception e) {
+        } catch (IOException e) {
             throw new FileInputStreamException();
         }
         return BASE_URL + path;

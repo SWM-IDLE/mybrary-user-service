@@ -3,7 +3,6 @@ package kr.mybrary.userservice.user.domain.storage;
 import io.awspring.cloud.s3.S3Exception;
 import io.awspring.cloud.s3.S3Template;
 import kr.mybrary.userservice.user.UserTestData;
-import kr.mybrary.userservice.user.domain.exception.io.FileInputStreamException;
 import kr.mybrary.userservice.user.domain.exception.storage.StorageClientException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -13,8 +12,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockMultipartFile;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -67,23 +64,6 @@ class AmazonS3ServiceTest {
                 .hasFieldOrPropertyWithValue("status", 500)
                 .hasFieldOrPropertyWithValue("errorCode", "S-01")
                 .hasFieldOrPropertyWithValue("errorMessage", "스토리지 서버와 통신에 실패했습니다.");
-
-        verify(s3Template).upload(any(), any(), any(), any());
-    }
-
-    @Test
-    @DisplayName("파일을 업로드할 때 IOException이 발생하면 FileInputStreamException을 던진다.")
-    void putFileWithIOException() throws Exception {
-        // given
-        MockMultipartFile multipartFile = UserTestData.createMockMultipartFile();
-        given(s3Template.upload(any(), any(), any(), any())).willThrow(new UncheckedIOException(new IOException()));
-
-        // when then
-        assertThatThrownBy(() -> amazonS3Service.putFile(multipartFile, "path"))
-                .isInstanceOf(FileInputStreamException.class)
-                .hasFieldOrPropertyWithValue("status", 500)
-                .hasFieldOrPropertyWithValue("errorCode", "IO-02")
-                .hasFieldOrPropertyWithValue("errorMessage", "파일을 읽어오는데 실패했습니다.");
 
         verify(s3Template).upload(any(), any(), any(), any());
     }
