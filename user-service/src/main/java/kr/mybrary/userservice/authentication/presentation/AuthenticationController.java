@@ -19,7 +19,7 @@ public class AuthenticationController {
     private final AuthenticationService authenticationService;
 
     @GetMapping("/refresh")
-    public ResponseEntity refreshToken(HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity<SuccessResponse<Void>> refreshToken(HttpServletRequest request, HttpServletResponse response) {
         authenticationService.reIssueToken(request, response);
 
         return ResponseEntity.status(200).body(
