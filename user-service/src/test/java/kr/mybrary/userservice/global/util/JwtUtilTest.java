@@ -105,7 +105,7 @@ class JwtUtilTest {
         // then
         assertAll(
                 () -> assertThat(accessToken).isPresent(),
-                () -> assertThat(accessToken.get()).isEqualTo("accessToken")
+                () -> assertThat(accessToken).contains("accessToken")
         );
 
     }
@@ -123,7 +123,7 @@ class JwtUtilTest {
         // then
         assertAll(
                 () -> assertThat(refreshToken).isPresent(),
-                () -> assertThat(refreshToken.get()).isEqualTo("refreshToken")
+                () -> assertThat(refreshToken).contains("refreshToken")
         );
     }
 
@@ -138,7 +138,7 @@ class JwtUtilTest {
         Optional<String> extractedLoginId = jwtUtil.getLoginIdFromValidAccessToken(accessToken);
 
         // then
-        assertThat(extractedLoginId.get()).isEqualTo(loginId);
+        assertThat(extractedLoginId).contains(loginId);
     }
 
     @DisplayName("액세스 토큰에서 loginId를 추출할 때 토큰이 유효하지 않으면 예외가 발생한다")
@@ -164,7 +164,7 @@ class JwtUtilTest {
         String extractedLoginId = jwtUtil.parseLoginId(accessToken);
 
         // then
-        assertThat(extractedLoginId).isEqualTo(loginId);
+        assertThat(extractedLoginId).contains(loginId);
     }
 
     @DisplayName("토큰의 만료 기간은 0 ~ 1시간 사이이다")
