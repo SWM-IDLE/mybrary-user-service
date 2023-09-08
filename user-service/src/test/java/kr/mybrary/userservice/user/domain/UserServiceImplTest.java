@@ -156,7 +156,7 @@ class UserServiceImplTest {
         assertThatThrownBy(() -> userService.getUserResponse(LOGIN_ID))
                 .isInstanceOf(UserNotFoundException.class)
                 .hasFieldOrPropertyWithValue("status", 404)
-                .hasFieldOrPropertyWithValue("errorCode", "U-05")
+                .hasFieldOrPropertyWithValue("errorCode", "U-01")
                 .hasFieldOrPropertyWithValue("errorMessage", "존재하지 않는 사용자입니다.");
 
         // Then
@@ -196,7 +196,7 @@ class UserServiceImplTest {
         assertThatThrownBy(() -> userService.getProfile(LOGIN_ID))
                 .isInstanceOf(UserNotFoundException.class)
                 .hasFieldOrPropertyWithValue("status", 404)
-                .hasFieldOrPropertyWithValue("errorCode", "U-05")
+                .hasFieldOrPropertyWithValue("errorCode", "U-01")
                 .hasFieldOrPropertyWithValue("errorMessage", "존재하지 않는 사용자입니다.");
 
         // Then
@@ -239,7 +239,7 @@ class UserServiceImplTest {
         assertThatThrownBy(() -> userService.getProfileImageUrl(serviceRequest))
                 .isInstanceOf(UserNotFoundException.class)
                 .hasFieldOrPropertyWithValue("status", 404)
-                .hasFieldOrPropertyWithValue("errorCode", "U-05")
+                .hasFieldOrPropertyWithValue("errorCode", "U-01")
                 .hasFieldOrPropertyWithValue("errorMessage", "존재하지 않는 사용자입니다.");
 
         // Then
@@ -461,7 +461,7 @@ class UserServiceImplTest {
         assertThatThrownBy(() -> userService.updateProfile(serviceRequest))
                 .isInstanceOf(UserNotFoundException.class)
                 .hasFieldOrPropertyWithValue("status", 404)
-                .hasFieldOrPropertyWithValue("errorCode", "U-05")
+                .hasFieldOrPropertyWithValue("errorCode", "U-01")
                 .hasFieldOrPropertyWithValue("errorMessage", "존재하지 않는 사용자입니다.");
 
         // Then
@@ -507,6 +507,53 @@ class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName("로그인 아이디로 사용자 프로필 정보를 수정한다. 닉네임이 다르다면 닉네임을 수정한다.")
+    void updateProfile() {
+        // Given
+        User user = UserFixture.COMMON_USER.getUser();
+        ProfileUpdateServiceRequest serviceRequest = UserTestData.createProfileUpdateServiceRequest();
+        given(userRepository.findByLoginId(LOGIN_ID)).willReturn(Optional.of(user));
+        given(userRepository.existsByNickname(serviceRequest.getNickname())).willReturn(false);
+
+        // When
+        userService.updateProfile(serviceRequest);
+
+        // Then
+        assertAll(
+                () -> assertThat(user.getNickname()).isEqualTo(serviceRequest.getNickname()),
+                () -> assertThat(user.getIntroduction()).isEqualTo(serviceRequest.getIntroduction())
+        );
+
+        verify(userRepository).findByLoginId(LOGIN_ID);
+        verify(userRepository).existsByNickname(serviceRequest.getNickname());
+    }
+
+    @Test
+    @DisplayName("로그인 아이디로 사용자 정보를 수정한다. 닉네임이 같다면 닉네임을 유지한다.")
+    void updateProfileWithSameNickname() {
+        // Given
+        User user = UserFixture.COMMON_USER.getUser();
+        ProfileUpdateServiceRequest serviceRequest = ProfileUpdateServiceRequest.builder()
+                .userId(LOGIN_ID)
+                .loginId(LOGIN_ID)
+                .nickname(user.getNickname())
+                .introduction("newIntroduction")
+                .build();
+        given(userRepository.findByLoginId(LOGIN_ID)).willReturn(Optional.of(user));
+
+        // When
+        userService.updateProfile(serviceRequest);
+
+        // Then
+        assertAll(
+                () -> assertThat(user.getNickname()).isEqualTo(serviceRequest.getNickname()),
+                () -> assertThat(user.getIntroduction()).isEqualTo(serviceRequest.getIntroduction())
+        );
+
+        verify(userRepository).findByLoginId(LOGIN_ID);
+    }
+
+    @Test
     @DisplayName("로그인 아이디로 사용자 프로필 이미지를 수정한다")
     void updateProfileImage() throws Exception {
         // Given
@@ -543,7 +590,7 @@ class UserServiceImplTest {
         assertThatThrownBy(() -> userService.updateProfileImage(serviceRequest))
                 .isInstanceOf(UserNotFoundException.class)
                 .hasFieldOrPropertyWithValue("status", 404)
-                .hasFieldOrPropertyWithValue("errorCode", "U-05")
+                .hasFieldOrPropertyWithValue("errorCode", "U-01")
                 .hasFieldOrPropertyWithValue("errorMessage", "존재하지 않는 사용자입니다.");
 
         // Then
@@ -635,7 +682,7 @@ class UserServiceImplTest {
         assertThatThrownBy(() -> userService.deleteProfileImage(serviceRequest))
                 .isInstanceOf(UserNotFoundException.class)
                 .hasFieldOrPropertyWithValue("status", 404)
-                .hasFieldOrPropertyWithValue("errorCode", "U-05")
+                .hasFieldOrPropertyWithValue("errorCode", "U-01")
                 .hasFieldOrPropertyWithValue("errorMessage", "존재하지 않는 사용자입니다.");
 
         // Then
@@ -682,7 +729,7 @@ class UserServiceImplTest {
         assertThatThrownBy(() -> userService.getFollowers(FOLLOWING_ID))
                 .isInstanceOf(UserNotFoundException.class)
                 .hasFieldOrPropertyWithValue("status", 404)
-                .hasFieldOrPropertyWithValue("errorCode", "U-05")
+                .hasFieldOrPropertyWithValue("errorCode", "U-01")
                 .hasFieldOrPropertyWithValue("errorMessage", "존재하지 않는 사용자입니다.");
 
         // Then
@@ -729,7 +776,7 @@ class UserServiceImplTest {
         assertThatThrownBy(() -> userService.getFollowings(FOLLOWER_ID))
                 .isInstanceOf(UserNotFoundException.class)
                 .hasFieldOrPropertyWithValue("status", 404)
-                .hasFieldOrPropertyWithValue("errorCode", "U-05")
+                .hasFieldOrPropertyWithValue("errorCode", "U-01")
                 .hasFieldOrPropertyWithValue("errorMessage", "존재하지 않는 사용자입니다.");
 
         // Then
@@ -800,7 +847,7 @@ class UserServiceImplTest {
         assertThatThrownBy(() -> userService.deleteAccount(LOGIN_ID))
                 .isInstanceOf(UserNotFoundException.class)
                 .hasFieldOrPropertyWithValue("status", 404)
-                .hasFieldOrPropertyWithValue("errorCode", "U-05")
+                .hasFieldOrPropertyWithValue("errorCode", "U-01")
                 .hasFieldOrPropertyWithValue("errorMessage", "존재하지 않는 사용자입니다.");
 
         // Then
