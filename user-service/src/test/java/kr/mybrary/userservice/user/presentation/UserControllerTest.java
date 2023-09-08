@@ -995,9 +995,7 @@ class UserControllerTest {
     @Test
     void getUserInfoCalledByFeignClient() throws Exception {
         // given
-        UserInfoRequest userInfoRequest = UserInfoRequest.builder()
-                .userIds(List.of("userId_1", "userId_2"))
-                .build();
+        List<String> userIds = List.of("userId_1", "userId_2");
 
         UserInfoServiceResponse userInfoServiceResponse = UserInfoServiceResponse.builder()
                 .userInfoElements(List.of(
@@ -1017,10 +1015,10 @@ class UserControllerTest {
 
         // when
         ResultActions actions = mockMvc.perform(
-                RestDocumentationRequestBuilders.post(BASE_URL + "/info")
-                        .with(csrf())
+                RestDocumentationRequestBuilders.get(BASE_URL + "/info")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(userInfoRequest)));
+                        .param("userId", userIds.get(0))
+                        .param("userId", userIds.get(1)));
 
         // then
         actions
@@ -1043,8 +1041,8 @@ class UserControllerTest {
                         ResourceSnippetParameters.builder()
                                 .tag("feignClient API for book-service")
                                 .summary("사용자 정보를 조회한다.")
-                                .requestFields(
-                                        fieldWithPath("userIds").type(JsonFieldType.ARRAY).description("조회할 사용자 아이디 목록")
+                                .queryParameters(
+                                        parameterWithName("userId").type(SimpleType.STRING).description("조회할 사용자 아이디")
                                 )
                                 .responseSchema(Schema.schema("get_user_info_response_body"))
                                 .responseFields(

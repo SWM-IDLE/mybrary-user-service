@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -160,11 +161,11 @@ public class UserController {
         );
     }
 
-    @PostMapping("/info")
+    @GetMapping("/info")
     public ResponseEntity<FeignClientResponse<UserInfoServiceResponse>> getUserInfoCalledByFeignClient(
-            @RequestBody UserInfoRequest userInfoRequest) {
+            @RequestParam("userId") List<String> userIds) {
         return ResponseEntity.ok().body(
-                FeignClientResponse.of(userService.getUserInfo(UserInfoServiceRequest.of(userInfoRequest)))
+                FeignClientResponse.of(userService.getUserInfo(UserInfoServiceRequest.of(userIds)))
         );
     }
 
