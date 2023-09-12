@@ -25,6 +25,7 @@ import kr.mybrary.userservice.interest.persistence.repository.UserInterestReposi
 import kr.mybrary.userservice.user.domain.UserService;
 import kr.mybrary.userservice.user.persistence.User;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -78,6 +79,8 @@ public class InterestServiceImpl implements InterestService {
     }
 
     @Override
+    @CacheEvict(cacheNames = "interestBased", key = "#request.loginId + '_' + #request.type + '_' + #request.page",
+            allEntries = true, cacheManager = "cacheManager")
     public UserInterestServiceResponse updateUserInterests(UserInterestUpdateServiceRequest request) {
         checkUserInterestUpdateRequestAuthentication(request);
         checkUserInterestUpdateRequestSize(request);
