@@ -1,5 +1,6 @@
 package kr.mybrary.userservice.interest.domain.dto.response;
 
+import java.io.Serializable;
 import java.util.List;
 import kr.mybrary.userservice.client.book.dto.response.BookRecommendationsServiceResponse.BookRecommendationsResponseElement;
 import kr.mybrary.userservice.interest.persistence.Interest;
@@ -9,14 +10,14 @@ import org.jetbrains.annotations.NotNull;
 
 @Getter
 @Builder
-public class UserInterestAndBookRecommendationsResponse {
+public class UserInterestAndBookRecommendationsResponse implements Serializable {
 
     private List<UserInterestElement> userInterests;
     private List<BookRecommendationElement> bookRecommendations;
 
     @Getter
     @Builder
-    public static class UserInterestElement {
+    public static class UserInterestElement implements Serializable {
 
         private String name;
         private int code;
@@ -24,7 +25,7 @@ public class UserInterestAndBookRecommendationsResponse {
 
     @Getter
     @Builder
-    public static class BookRecommendationElement {
+    public static class BookRecommendationElement implements Serializable {
 
         private String thumbnailUrl;
         private String isbn13;
