@@ -12,9 +12,9 @@ public class UserInfoServiceRequest {
 
     List<String> userIds;
 
-    public static UserInfoServiceRequest of(UserInfoRequest userInfoRequest) {
+    public static UserInfoServiceRequest of(List<String> userIds) {
         return UserInfoServiceRequest.builder()
-                .userIds(userInfoRequest.getUserIds())
+                .userIds(userIds)
                 .build();
     }
 

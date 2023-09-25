@@ -9,7 +9,7 @@ plugins {
 	// swagger generator 플러그인 추가
 	id 'org.hidetake.swagger.generator' version '2.18.2'
 	id 'jacoco'
-
+	id "org.sonarqube" version "4.3.1.3277"
 }
 
 group = 'kr.mybrary'
@@ -116,4 +116,30 @@ openapi3 {
 
 clean {
 	delete file('src/main/generated')
+}
+
+sonar {
+	properties {
+		property "sonar.projectKey", "SWM-IDLE_mybrary-user-service"
+		property "sonar.organization", "swm-idle-sonarqube-key"
+		property "sonar.host.url", "https://sonarcloud.io"
+	}
+}
+
+jacoco {
+	toolVersion = "0.8.8"
+}
+
+test {
+	useJUnitPlatform()
+	finalizedBy jacocoTestReport
+}
+
+jacocoTestReport {
+	dependsOn test
+	reports {
+		xml.enabled true
+		html.enabled true
+	}
+	finalizedBy 'jacocoTestCoverageVerification'
 }

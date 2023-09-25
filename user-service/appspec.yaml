@@ -1,0 +1,10 @@
+version: 0.0
+Resources:
+  - TargetService:
+      Type: AWS::ECS::Service
+      Properties:
+        TaskDefinition: taskDefinition
+        LoadBalancerInfo:
+          ContainerName: userService
+          ContainerPort: 80
+        PlatformVersion: "LATEST"

@@ -19,8 +19,9 @@ public class AuthenticationController {
     private final AuthenticationService authenticationService;
 
     @GetMapping("/refresh")
-    public ResponseEntity<SuccessResponse> refreshToken(HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity<SuccessResponse<Void>> refreshToken(HttpServletRequest request, HttpServletResponse response) {
         authenticationService.reIssueToken(request, response);
+
         return ResponseEntity.status(200).body(
                 SuccessResponse.of(HttpStatus.CREATED.toString(), "토큰 재발급에 성공했습니다.", null)
         );

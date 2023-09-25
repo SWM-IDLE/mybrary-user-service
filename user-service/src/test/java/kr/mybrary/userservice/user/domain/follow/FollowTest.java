@@ -337,7 +337,7 @@ public class FollowTest {
         assertThatThrownBy(() -> userService.follow(FollowServiceRequest.of(userA.getLoginId(), "nonExistUser")))
                 .isInstanceOf(UserNotFoundException.class)
                 .hasFieldOrPropertyWithValue("status", 404)
-                .hasFieldOrPropertyWithValue("errorCode", "U-05")
+                .hasFieldOrPropertyWithValue("errorCode", "U-01")
                 .hasFieldOrPropertyWithValue("errorMessage", "존재하지 않는 사용자입니다.");
 
         verify(userRepository).findByLoginId(userA.getLoginId());

@@ -1,12 +1,11 @@
-package kr.mybrary.userservice.global.jwt.service;
+package kr.mybrary.userservice.global.util;
 
 import com.auth0.jwt.JWT;
 import jakarta.servlet.http.HttpServletRequest;
-import kr.mybrary.userservice.global.util.JwtUtil;
+import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.test.context.ActiveProfiles;
@@ -20,27 +19,16 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @SpringBootTest
 @ActiveProfiles("test")
 class JwtUtilTest {
 
-    @Value("${jwt.secretKey}")
-    private String secretKey;
-
-    @Value("${jwt.access.expiration}")
-    private Long accessTokenExpirationPeriod;
-
-    @Value("${jwt.refresh.expiration}")
-    private Long refreshTokenExpirationPeriod;
-
-    @Value("${jwt.access.header}")
-    private String accessHeader;
-
-    @Value("${jwt.refresh.header}")
-    private String refreshHeader;
+    static long ACCESS_TOKEN_EXPIRATION_PERIOD =  3600000;
+    static long REFRESH_TOKEN_EXPIRATION_PERIOD =  1209600000;
+    static String ACCESS_HEADER = "Authorization";
+    static String REFRESH_HEADER = "Authorization-Refresh";
 
     private static final String ACCESS_TOKEN_SUBJECT = "AccessToken";
     private static final String REFRESH_TOKEN_SUBJECT = "RefreshToken";
@@ -65,7 +53,7 @@ class JwtUtilTest {
                 () -> assertThat(createdAccessToken).isNotNull(),
                 () -> assertThat(JWT.decode(createdAccessToken).getSubject()).isEqualTo(ACCESS_TOKEN_SUBJECT),
                 () -> assertThat(JWT.decode(createdAccessToken).getExpiresAt()).isEqualTo(new Date(
-                        Date.from(date.atZone(ZoneId.systemDefault()).toInstant()).getTime() + accessTokenExpirationPeriod)),
+                        Date.from(date.atZone(ZoneId.systemDefault()).toInstant()).getTime() + ACCESS_TOKEN_EXPIRATION_PERIOD)),
                 () -> assertThat(JWT.decode(createdAccessToken).getClaim(LOGIN_ID_CLAIM).asString()).isEqualTo(loginId),
                 () -> assertThat(JWT.decode(createdAccessToken).getSignature()).isNotNull()
         );
@@ -85,9 +73,23 @@ class JwtUtilTest {
                 () -> assertThat(createdRefreshToken).isNotNull(),
                 () -> assertThat(JWT.decode(createdRefreshToken).getSubject()).isEqualTo(REFRESH_TOKEN_SUBJECT),
                 () -> assertThat(JWT.decode(createdRefreshToken).getExpiresAt()).isEqualTo(new Date(
-                        Date.from(date.atZone(ZoneId.systemDefault()).toInstant()).getTime() + refreshTokenExpirationPeriod)),
+                        Date.from(date.atZone(ZoneId.systemDefault()).toInstant()).getTime() + REFRESH_TOKEN_EXPIRATION_PERIOD)),
                 () -> assertThat(JWT.decode(createdRefreshToken).getSignature()).isNotNull()
         );
+    }
+
+    @DisplayName("액세스 토큰과 리프레쉬 토큰을 헤더에 추가한다")
+    @Test
+    void sendAccessAndRefreshToken() {
+        // given
+        HttpServletResponse response = mock(HttpServletResponse.class);
+
+        // when
+        jwtUtil.sendAccessAndRefreshToken(response, "accessToken", "refreshToken");
+
+        // then
+        verify(response, times(1)).setHeader(ACCESS_HEADER, "accessToken");
+        verify(response, times(1)).setHeader(REFRESH_HEADER, "refreshToken");
     }
 
     @DisplayName("액세스 토큰을 요청 헤더에서 추출한다")
@@ -95,7 +97,7 @@ class JwtUtilTest {
     void extractAccessToken() {
         // given
         HttpServletRequest request = mock(HttpServletRequest.class);
-        when(request.getHeader(accessHeader)).thenReturn(BEARER + "accessToken");
+        when(request.getHeader(ACCESS_HEADER)).thenReturn(BEARER + "accessToken");
 
         // when
         Optional<String> accessToken = jwtUtil.extractAccessToken(request);
@@ -103,7 +105,7 @@ class JwtUtilTest {
         // then
         assertAll(
                 () -> assertThat(accessToken).isPresent(),
-                () -> assertThat(accessToken.get()).isEqualTo("accessToken")
+                () -> assertThat(accessToken).contains("accessToken")
         );
 
     }
@@ -113,7 +115,7 @@ class JwtUtilTest {
     void extractRefreshToken() {
         // given
         HttpServletRequest request = mock(HttpServletRequest.class);
-        when(request.getHeader(refreshHeader)).thenReturn(BEARER + "refreshToken");
+        when(request.getHeader(REFRESH_HEADER)).thenReturn(BEARER + "refreshToken");
 
         // when
         Optional<String> refreshToken = jwtUtil.extractRefreshToken(request);
@@ -121,13 +123,13 @@ class JwtUtilTest {
         // then
         assertAll(
                 () -> assertThat(refreshToken).isPresent(),
-                () -> assertThat(refreshToken.get()).isEqualTo("refreshToken")
+                () -> assertThat(refreshToken).contains("refreshToken")
         );
     }
 
-    @DisplayName("액세스 토큰에서 loginId를 추출한다")
+    @DisplayName("유효한 액세스 토큰에서 loginId를 추출한다")
     @Test
-    void getLoginId() {
+    void getLoginIdFromValidAccessToken() {
         // given
         String loginId = "loginId";
         String accessToken = jwtUtil.createAccessToken(loginId, LocalDateTime.now());
@@ -136,7 +138,7 @@ class JwtUtilTest {
         Optional<String> extractedLoginId = jwtUtil.getLoginIdFromValidAccessToken(accessToken);
 
         // then
-        assertThat(extractedLoginId.get()).isEqualTo(loginId);
+        assertThat(extractedLoginId).contains(loginId);
     }
 
     @DisplayName("액세스 토큰에서 loginId를 추출할 때 토큰이 유효하지 않으면 예외가 발생한다")
@@ -149,6 +151,20 @@ class JwtUtilTest {
         assertThatThrownBy(() -> jwtUtil.getLoginIdFromValidAccessToken(accessToken))
                 .isInstanceOf(JwtException.class)
                 .hasMessage("유효하지 않은 토큰입니다.");
+    }
+
+    @DisplayName("액세스 토큰에서 loginId를 단순히 추출한다")
+    @Test
+    void parseLoginId() {
+        // given
+        String loginId = "loginId";
+        String accessToken = jwtUtil.createAccessToken(loginId, LocalDateTime.now());
+
+        // when
+        String extractedLoginId = jwtUtil.parseLoginId(accessToken);
+
+        // then
+        assertThat(extractedLoginId).contains(loginId);
     }
 
     @DisplayName("토큰의 만료 기간은 0 ~ 1시간 사이이다")
