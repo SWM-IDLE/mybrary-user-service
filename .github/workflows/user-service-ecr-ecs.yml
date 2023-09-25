@@ -83,11 +83,7 @@ jobs:
           docker build --platform amd64 -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
+          
       - name: Fill in the new image ID in the Amazon ECS task definition
         id: task-def
         uses: aws-actions/amazon-ecs-render-task-definition@v1
@@ -105,4 +101,3 @@ jobs:
           codedeploy-deployment-group: DgpECS-MybraryCluster-userService-EcsService
           codedeploy-appspec: ./user-service/appspec.yaml
           wait-for-service-stability: true
-
