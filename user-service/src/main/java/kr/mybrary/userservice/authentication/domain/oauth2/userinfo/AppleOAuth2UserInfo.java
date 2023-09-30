@@ -10,36 +10,18 @@ public class AppleOAuth2UserInfo extends OAuth2UserInfo {
 
     @Override
     public String getId() {
-        return (String) attributes.get("id_token");
+        return (String) attributes.get("sub");
     }
 
     @Override
     public String getNickname() {
-        Map<String, Object> name = getName();
-        return (String) name.get("lastName")+name.get("firstName");
+        // TODO: Apple에서 사용자 이름을 제공받을 수 있도록 수정 예정
+        return "User";
     }
 
     @Override
     public String getEmail() {
-        Map<String, Object> user = getUser();
-        if (user == null) {
-            return null;
-        }
-        return (String) user.get("email");
-    }
-
-    private Map<String, Object> getName() {
-        Map<String, Object> user = getUser();
-        if (user == null) {
-            return null;
-        }
-        Map<String, Object> name = (Map<String, Object>) user.get("name");
-        return name;
-    }
-
-    private Map<String, Object> getUser() {
-        Map<String, Object> user = (Map<String, Object>) attributes.get("user");
-        return user;
+        return (String) attributes.get("email");
     }
 
 }
