@@ -15,6 +15,10 @@ public class RedisUtil {
 
     public void set(String key, Object object, Duration duration) {
         redisTemplate.setValueSerializer(new Jackson2JsonRedisSerializer(object.getClass()));
+        if(duration == null) {
+            redisTemplate.opsForValue().set(key, object);
+            return;
+        }
         redisTemplate.opsForValue().set(key, object, duration);
     }
 
