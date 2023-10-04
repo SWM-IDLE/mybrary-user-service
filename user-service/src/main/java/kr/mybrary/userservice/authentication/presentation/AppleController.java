@@ -15,9 +15,6 @@ public class AppleController {
 
     @PostMapping("/apple/callback")
     public void callback(HttpServletRequest request, HttpServletResponse response) throws Exception {
-        System.out.println("request: " + request.toString());
-        System.out.println("code: " + request.getParameter("code"));
-        request.getParameterMap().forEach((key, value) -> System.out.println("key: " + key + ", value: " + value));
         response.sendRedirect(appleService.getAppleInfo(request));
     }
 

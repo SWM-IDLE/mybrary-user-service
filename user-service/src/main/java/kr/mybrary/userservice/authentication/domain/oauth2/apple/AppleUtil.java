@@ -1,7 +1,5 @@
 package kr.mybrary.userservice.authentication.domain.oauth2.apple;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
@@ -17,16 +15,12 @@ import org.springframework.stereotype.Component;
 
 import java.io.FileReader;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.ECPrivateKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
-import java.util.Base64;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 
 @Component
 public class AppleUtil {
@@ -78,26 +72,6 @@ public class AppleUtil {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    //JWT Payload부분 decode 메서드
-    public Map<String, Object> decodeJwtTokenPayload(String jwtToken){
-        Map<String, Object> jwtClaims = new HashMap<>();
-        try {
-            String[] parts = jwtToken.split("\\.");
-            Base64.Decoder decoder = Base64.getUrlDecoder();
-
-            byte[] decodedBytes = decoder.decode(parts[1].getBytes(StandardCharsets.UTF_8));
-            String decodedString = new String(decodedBytes, StandardCharsets.UTF_8);
-            ObjectMapper mapper = new ObjectMapper();
-
-            Map<String, Object> map = mapper.readValue(decodedString, Map.class);
-            jwtClaims.putAll(map);
-
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException("JWT Payload decode 실패");
-        }
-        return jwtClaims;
     }
 
 }
