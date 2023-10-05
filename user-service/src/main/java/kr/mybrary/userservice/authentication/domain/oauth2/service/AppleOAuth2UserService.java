@@ -24,6 +24,7 @@ import net.minidev.json.parser.JSONParser;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.bouncycastle.util.io.pem.PemObject;
 import org.bouncycastle.util.io.pem.PemReader;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpEntity;
@@ -55,21 +56,28 @@ import static kr.mybrary.userservice.global.constant.ImageConstant.*;
 @Slf4j
 public class AppleOAuth2UserService {
 
-    private String APPLE_TEAM_ID = "KU782MK78R";
+    @Value("${spring.security.oauth2.client.registration.apple.client-id}")
+    private String APPLE_CLIENT_ID;
 
-    private String APPLE_LOGIN_KEY = "8LCJC23RYD";
+    @Value("${spring.security.oauth2.client.registration.apple.client-secret}")
+    private String APPLE_CLIENT_SECRET;
 
-    private String APPLE_CLIENT_ID = "kr.mybrary.service";
+    @Value("${spring.security.oauth2.client.registration.apple.redirect-uri}")
+    private String APPLE_REDIRECT_URI;
 
-    private String APPLE_REDIRECT_URL = "https://f97d-1-235-157-76.ngrok-free.app/auth/v1/apple/callback";
+    @Value("${spring.security.oauth2.client.registration.apple.authorization-grant-type}")
+    private String APPLE_AUTHORIZATION_GRANT_TYPE;
 
-    private String APPLE_KEY_PATH = "apple/AuthKey_8LCJC23RYD.p8";
+    private final static String APPLE_KEY_PATH = "apple/AuthKey_8LCJC23RYD.p8";
+    private final static String APPLE_AUTH_URL = "https://appleid.apple.com";
+    private final static String APPLE_TOKEN_URI = "/auth/token";
+    private final static String APPLE_REVOKE_URI = "/auth/revoke";
+
     static final String CALLBACK_URL = "kr.mybrary://";
     static final String ACCESS_TOKEN_PARAMETER = "Authorization";
     static final String REFRESH_TOKEN_PARAMETER = "Authorization-Refresh";
     static final int REFRESH_TOKEN_EXPIRATION = 14;
 
-    private final static String APPLE_AUTH_URL = "https://appleid.apple.com";
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
@@ -85,39 +93,35 @@ public class AppleOAuth2UserService {
         if(request.getParameter("user") != null) {
             appleUser = objectMapper.readValue(request.getParameter("user"), AppleOAuth2UserInfo.class);
             fullName = appleUser.getName().getLastName() + appleUser.getName().getFirstName();
-//            String name = appleUser.getName().getLastName() + appleUser.getName().getFirstName();
-//            String email = appleUser.getEmail();
         }
 
         // code가 없으면 예외 발생
         if (request.getParameter("code") == null) throw new Exception("Failed get authorization code");
 
         // Client Secret 생성
-        String clientSecret = createAppleClientSecret(APPLE_CLIENT_ID, "AuthKey_8LCJC23RYD.p8/8LCJC23RYD/KU782MK78R");
+        String clientSecret = createAppleClientSecret(APPLE_CLIENT_ID, APPLE_CLIENT_SECRET);
         String userId = "";
         String email  = "";
         String accessToken = "";
         String refreshToken = "";
-
 
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.add("Content-type", "application/x-www-form-urlencoded");
 
             MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-            params.add("grant_type"   , "authorization_code");
+            params.add("grant_type"   , APPLE_AUTHORIZATION_GRANT_TYPE);
             params.add("client_id"    , APPLE_CLIENT_ID);
             params.add("client_secret", clientSecret);
             params.add("code"         , request.getParameter("code"));
-            params.add("redirect_uri" , APPLE_REDIRECT_URL);
-
+            params.add("redirect_uri" , APPLE_REDIRECT_URI);
 
             RestTemplate restTemplate = new RestTemplate(); // TODO: FeignClient로 변경
             HttpEntity<MultiValueMap<String, String>> httpEntity = new HttpEntity<>(params, headers);
 
             // id token 발급
             var response = restTemplate.exchange(
-                    APPLE_AUTH_URL + "/auth/token",
+                    APPLE_AUTH_URL + APPLE_TOKEN_URI,
                     HttpMethod.POST,
                     httpEntity,
                     String.class
@@ -184,7 +188,7 @@ public class AppleOAuth2UserService {
 
             // revoke 요청
             var response = restTemplate.exchange(
-                    APPLE_AUTH_URL + "/auth/revoke",
+                    APPLE_AUTH_URL + APPLE_REVOKE_URI,
                     HttpMethod.POST,
                     httpEntity,
                     String.class
@@ -238,12 +242,12 @@ public class AppleOAuth2UserService {
                 .subject(appleClientId)
                 .issueTime(new Date())
                 .expirationTime(new Date(System.currentTimeMillis() + 1000 * 60 * 5))
-                .audience("https://appleid.apple.com")
+                .audience(APPLE_AUTH_URL)
                 .build();
 
         SignedJWT jwt = new SignedJWT(header, claimsSet);
 
-        PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(readPrivateKey("/apple/AuthKey_8LCJC23RYD.p8"));
+        PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(readPrivateKey(APPLE_KEY_PATH));
         KeyFactory kf;
         try {
             kf = KeyFactory.getInstance("EC");
