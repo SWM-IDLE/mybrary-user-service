@@ -1,7 +1,7 @@
 package kr.mybrary.userservice.user.domain;
 
 import jakarta.validation.constraints.NotNull;
-import kr.mybrary.userservice.authentication.domain.oauth2.apple.AppleService;
+import kr.mybrary.userservice.authentication.domain.oauth2.service.AppleOAuth2UserService;
 import kr.mybrary.userservice.global.util.MultipartFileUtil;
 import kr.mybrary.userservice.user.domain.dto.UserMapper;
 import kr.mybrary.userservice.user.domain.dto.request.*;
@@ -42,7 +42,7 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final StorageService storageService;
-    private final AppleService appleService;
+    private final AppleOAuth2UserService appleOAuth2UserService;
     private static final String PROFILE_IMAGE_PATH_FORMAT = "profile/profileImage/%s/";
     private static final int MAX_PROFILE_IMAGE_SIZE = 5 * 1024 * 1024;
     private static final String PROFILE_IMAGE_SIZE_TINY = "tiny";
@@ -351,7 +351,7 @@ public class UserServiceImpl implements UserService {
     public void deleteAccount(String loginId) {
         User user = getUser(loginId);
         if(user.getSocialType() == SocialType.APPLE) {
-            appleService.withdrawApple(user.getSocialId());
+            appleOAuth2UserService.withdrawApple(user.getSocialId());
         }
         userRepository.delete(user);
     }

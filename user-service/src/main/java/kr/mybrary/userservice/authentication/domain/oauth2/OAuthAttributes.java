@@ -39,9 +39,6 @@ public class OAuthAttributes {
         if (socialType == SocialType.NAVER) {
             return ofNaver(userNameAttributeName, attributes);
         }
-        if(socialType == SocialType.APPLE) {
-            return ofApple(userNameAttributeName, attributes);
-        }
         throw new OAuth2AuthenticationException(SOCIAL_TYPE_NOT_SUPPORTED);
     }
 
@@ -69,14 +66,6 @@ public class OAuthAttributes {
                 .build();
     }
 
-    private static OAuthAttributes ofApple(String userNameAttributeName,
-            Map<String, Object> attributes) {
-        return OAuthAttributes.builder()
-                .nameAttributeKey(userNameAttributeName)
-                .oAuth2UserInfo(new AppleOAuth2UserInfo(attributes))
-                .build();
-    }
-
     public User toEntity(SocialType socialType, OAuth2UserInfo oAuth2UserInfo) {
         return User.builder()
                 .socialType(socialType)
@@ -89,6 +78,5 @@ public class OAuthAttributes {
                 .role(Role.USER)
                 .build();
     }
-
 
 }

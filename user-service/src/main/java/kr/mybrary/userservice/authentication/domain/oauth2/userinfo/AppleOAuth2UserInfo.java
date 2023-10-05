@@ -1,27 +1,20 @@
 package kr.mybrary.userservice.authentication.domain.oauth2.userinfo;
 
-import java.util.Map;
+import lombok.Builder;
+import lombok.Getter;
 
-public class AppleOAuth2UserInfo extends OAuth2UserInfo {
+@Getter
+@Builder
+public class AppleOAuth2UserInfo {
 
-    public AppleOAuth2UserInfo(Map<String, Object> attributes) {
-        super(attributes);
-    }
+    private Name name;
+    private String email;
 
-    @Override
-    public String getId() {
-        return (String) attributes.get("sub");
-    }
-
-    @Override
-    public String getNickname() {
-        // TODO: Apple에서 사용자 이름을 제공받을 수 있도록 수정 예정
-        return "User";
-    }
-
-    @Override
-    public String getEmail() {
-        return (String) attributes.get("email");
+    @Getter
+    @Builder
+    public static class Name {
+        private String firstName;
+        private String lastName;
     }
 
 }
