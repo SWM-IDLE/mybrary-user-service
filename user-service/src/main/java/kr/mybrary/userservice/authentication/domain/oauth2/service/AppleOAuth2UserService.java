@@ -11,6 +11,8 @@ import com.nimbusds.jwt.SignedJWT;
 import jakarta.servlet.http.HttpServletRequest;
 import kr.mybrary.userservice.authentication.domain.oauth2.userinfo.AppleOAuth2TokenInfo;
 import kr.mybrary.userservice.authentication.domain.oauth2.userinfo.AppleOAuth2UserInfo;
+import kr.mybrary.userservice.client.apple.api.AppleOAuth2ServiceClient;
+import kr.mybrary.userservice.client.apple.dto.AppleOAuth2TokenServiceResponse;
 import kr.mybrary.userservice.global.util.JwtUtil;
 import kr.mybrary.userservice.global.util.RedisUtil;
 import kr.mybrary.userservice.user.persistence.Role;
@@ -20,22 +22,14 @@ import kr.mybrary.userservice.user.persistence.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONObject;
-import net.minidev.json.parser.JSONParser;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.bouncycastle.util.io.pem.PemObject;
 import org.bouncycastle.util.io.pem.PemReader;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.FileReader;
@@ -67,15 +61,11 @@ public class AppleOAuth2UserService {
     @Value("${spring.security.oauth2.client.registration.apple.redirect-uri}")
     private String APPLE_REDIRECT_URI;
 
-    @Value("${spring.security.oauth2.client.provider.apple.token_uri}")
-    private String APPLE_TOKEN_URI;
-
     @Value("${spring.security.oauth2.client.registration.apple.authorization-grant-type}")
     private String APPLE_AUTHORIZATION_GRANT_TYPE;
 
     private final static String APPLE_KEY_PATH = "apple/AuthKey_8LCJC23RYD.p8";
     private final static String APPLE_AUTH_URL = "https://appleid.apple.com";
-    private final static String APPLE_REVOKE_URI = "/auth/revoke";
 
     static final String CALLBACK_URL = "kr.mybrary://";
     static final String ACCESS_TOKEN_PARAMETER = "Authorization";
@@ -83,72 +73,42 @@ public class AppleOAuth2UserService {
     static final String APPLE_TOKEN_PREFIX = "APPLE_";
     static final int REFRESH_TOKEN_EXPIRATION = 14;
 
+    private final AppleOAuth2ServiceClient appleOAuth2ServiceClient;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final RedisUtil redisUtil;
+    private final ObjectMapper objectMapper;
 
     public String getAppleInfo(HttpServletRequest request) throws Exception {
         log.info("Apple Login Start");
-        ObjectMapper objectMapper = new ObjectMapper();
-        AppleOAuth2UserInfo appleUser;
-        String fullName = "";
-
         // user 정보가 있으면 AppleUser 객체로 변환
-        if (request.getParameter(USER) != null) {
-            appleUser = objectMapper.readValue(request.getParameter(USER), AppleOAuth2UserInfo.class);
-            fullName = appleUser.getName().getLastName() + appleUser.getName().getFirstName();
+        if(request.getParameter(USER) == null) {
+            throw new Exception("Failed get user info");
         }
+        AppleOAuth2UserInfo appleUser = objectMapper.readValue(request.getParameter(USER), AppleOAuth2UserInfo.class);
+        String fullName = appleUser.getName().getLastName() + appleUser.getName().getFirstName();
+
 
         // code가 없으면 예외 발생
         if (request.getParameter(CODE) == null) throw new Exception("Failed get authorization code");
 
         // Client Secret 생성
         String clientSecret = createAppleClientSecret(APPLE_CLIENT_ID, APPLE_CLIENT_SECRET);
-        String userId = "";
-        String email = "";
-        String accessToken = "";
-        String refreshToken = "";
 
-        try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+        AppleOAuth2TokenServiceResponse tokenResponse = appleOAuth2ServiceClient.getAppleToken(APPLE_CLIENT_ID,
+                clientSecret, request.getParameter(CODE), APPLE_AUTHORIZATION_GRANT_TYPE, APPLE_REDIRECT_URI);
 
-            MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-            params.add("grant_type", APPLE_AUTHORIZATION_GRANT_TYPE);
-            params.add("client_id", APPLE_CLIENT_ID);
-            params.add("client_secret", clientSecret);
-            params.add("code", request.getParameter(CODE));
-            params.add("redirect_uri", APPLE_REDIRECT_URI);
+        String accessToken = String.valueOf(tokenResponse.getAccess_token());
+        String refreshToken = String.valueOf(tokenResponse.getRefresh_token());
 
-            RestTemplate restTemplate = new RestTemplate(); // TODO: FeignClient로 변경
-            HttpEntity<MultiValueMap<String, String>> httpEntity = new HttpEntity<>(params, headers);
+        SignedJWT signedJWT = SignedJWT.parse(tokenResponse.getId_token());
+        JWTClaimsSet getPayload = signedJWT.getJWTClaimsSet();
 
-            // id token 발급
-            var response = restTemplate.exchange(
-                    APPLE_TOKEN_URI,
-                    HttpMethod.POST,
-                    httpEntity,
-                    String.class
-            );
+        JSONObject payload = objectMapper.convertValue(getPayload.getClaims(), JSONObject.class);
 
-            JSONParser jsonParser = new JSONParser();
-            JSONObject jsonObj = (JSONObject) jsonParser.parse(response.getBody());
-
-            accessToken = String.valueOf(jsonObj.get(ACCESS_TOKEN));
-            refreshToken = String.valueOf(jsonObj.get(REFRESH_TOKEN));
-
-            //ID TOKEN을 통해 회원 고유 식별자 받기 - decode 안해도 되는 것인가?
-            SignedJWT signedJWT = SignedJWT.parse(String.valueOf(jsonObj.get(ID_TOKEN)));
-            JWTClaimsSet getPayload = signedJWT.getJWTClaimsSet();
-
-            JSONObject payload = objectMapper.convertValue(getPayload.getClaims(), JSONObject.class);
-
-            userId = String.valueOf(payload.get(SUB));
-            email = String.valueOf(payload.get(EMAIL));
-        } catch (Exception e) {
-            throw new Exception("API call failed");
-        }
+        String userId = String.valueOf(payload.get(SUB));
+        String email = String.valueOf(payload.get(EMAIL));
 
         // 가입된 회원인지 확인
         AppleOAuth2TokenInfo appleOAuth2TokenInfo = AppleOAuth2TokenInfo.builder()
@@ -157,7 +117,6 @@ public class AppleOAuth2UserService {
                 .email(email)
                 .fullName(fullName)
                 .build();
-
 
         User createdUser = getUser(appleOAuth2TokenInfo);
 
@@ -178,29 +137,7 @@ public class AppleOAuth2UserService {
     public void withdrawApple(String socialId) {
         String clientSecret = createAppleClientSecret(APPLE_CLIENT_ID, APPLE_CLIENT_SECRET);
         String refreshToken = (String) redisUtil.get(APPLE_TOKEN_PREFIX + socialId);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-
-        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add("client_secret", clientSecret); // 생성한 client_secret
-        params.add("token", refreshToken); // 생성한 refresh_token
-        params.add("client_id", APPLE_CLIENT_ID); // app bundle id
-
-        try {
-            RestTemplate restTemplate = new RestTemplate(); // TODO: FeignClient로 변경
-            HttpEntity<MultiValueMap<String, String>> httpEntity = new HttpEntity<>(params, headers);
-
-            // revoke 요청
-            var response = restTemplate.exchange(
-                    APPLE_AUTH_URL + APPLE_REVOKE_URI,
-                    HttpMethod.POST,
-                    httpEntity,
-                    String.class
-            );
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        appleOAuth2ServiceClient.revokeAppleToken(APPLE_CLIENT_ID, clientSecret, refreshToken, "refresh_token");
         redisUtil.delete(APPLE_TOKEN_PREFIX + socialId);
     }
 
