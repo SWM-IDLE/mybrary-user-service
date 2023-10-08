@@ -9,6 +9,8 @@ import com.nimbusds.jose.crypto.ECDSASigner;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import jakarta.servlet.http.HttpServletRequest;
+import kr.mybrary.userservice.authentication.domain.exception.AppleCodeNotFoundException;
+import kr.mybrary.userservice.authentication.domain.exception.AppleUserInfoNotFoundException;
 import kr.mybrary.userservice.authentication.domain.oauth2.userinfo.AppleOAuth2TokenInfo;
 import kr.mybrary.userservice.authentication.domain.oauth2.userinfo.AppleOAuth2UserInfo;
 import kr.mybrary.userservice.client.apple.api.AppleOAuth2ServiceClient;
@@ -81,21 +83,18 @@ public class AppleOAuth2UserService {
     private final ObjectMapper objectMapper;
 
     public String getAppleInfo(HttpServletRequest request) throws Exception {
-        log.info("Apple Login Start");
-        // user 정보가 있으면 AppleUser 객체로 변환
-        if(request.getParameter(USER) == null) {
-            throw new Exception("Failed get user info");
+        if(request.getParameter(USER) == null) { // TODO: 최초 로그인이 아닌 경우 처리 필요
+            throw new AppleUserInfoNotFoundException();
         }
+
         AppleOAuth2UserInfo appleUser = objectMapper.readValue(request.getParameter(USER), AppleOAuth2UserInfo.class);
         String fullName = appleUser.getName().getLastName() + appleUser.getName().getFirstName();
 
+        if (request.getParameter(CODE) == null) {
+            throw new AppleCodeNotFoundException();
+        }
 
-        // code가 없으면 예외 발생
-        if (request.getParameter(CODE) == null) throw new Exception("Failed get authorization code");
-
-        // Client Secret 생성
         String clientSecret = createAppleClientSecret(APPLE_CLIENT_ID, APPLE_CLIENT_SECRET);
-
         AppleOAuth2TokenServiceResponse tokenResponse = appleOAuth2ServiceClient.getAppleToken(APPLE_CLIENT_ID,
                 clientSecret, request.getParameter(CODE), APPLE_AUTHORIZATION_GRANT_TYPE, APPLE_REDIRECT_URI);
 
@@ -104,7 +103,6 @@ public class AppleOAuth2UserService {
 
         SignedJWT signedJWT = SignedJWT.parse(tokenResponse.getId_token());
         JWTClaimsSet getPayload = signedJWT.getJWTClaimsSet();
-
         JSONObject payload = objectMapper.convertValue(getPayload.getClaims(), JSONObject.class);
 
         String userId = String.valueOf(payload.get(SUB));
@@ -143,7 +141,6 @@ public class AppleOAuth2UserService {
 
     private User getUser(AppleOAuth2TokenInfo appleOAuth2TokenInfo) {
         User findUser = userRepository.findBySocialTypeAndSocialId(SocialType.APPLE, appleOAuth2TokenInfo.getId()).orElse(null);
-
         if (findUser == null) {
             return saveUser(appleOAuth2TokenInfo);
         }
