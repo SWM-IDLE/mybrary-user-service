@@ -9,6 +9,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 
+import java.time.Duration;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
@@ -23,8 +25,8 @@ class RedisUtilTest {
     RedisUtil redisUtil;
 
     @Test
-    @DisplayName("Redis에 데이터를 저장한다")
-    void set() {
+    @DisplayName("Redis에 데이터를 저장한다. 만료시간이 없는 경우")
+    void setWithoutExpireTime() {
         // given
         doNothing().when(redisTemplate).setValueSerializer(any());
         ValueOperations<String, Object> valueOperations = mock(ValueOperations.class);
@@ -32,6 +34,23 @@ class RedisUtilTest {
 
         // when
         redisUtil.set("key", "value", null);
+
+        // then
+        verify(redisTemplate, times(1)).setValueSerializer(any());
+        verify(redisTemplate, times(1)).opsForValue();
+        verify(valueOperations, times(1)).set(any(), any());
+    }
+
+    @Test
+    @DisplayName("Redis에 데이터를 저장한다. 만료시간이 있는 경우")
+    void setWithExpireTime() {
+        // given
+        doNothing().when(redisTemplate).setValueSerializer(any());
+        ValueOperations<String, Object> valueOperations = mock(ValueOperations.class);
+        given(redisTemplate.opsForValue()).willReturn(valueOperations);
+
+        // when
+        redisUtil.set("key", "value", Duration.ofSeconds(10));
 
         // then
         verify(redisTemplate, times(1)).setValueSerializer(any());
