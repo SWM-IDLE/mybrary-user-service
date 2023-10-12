@@ -32,7 +32,7 @@ public class AuthenticationController {
 
     @PostMapping("/apple/callback")
     public void callback(HttpServletRequest request, HttpServletResponse response) throws Exception {
-        response.sendRedirect(appleOAuth2UserService.getAppleInfo(request));
+        response.sendRedirect(appleOAuth2UserService.authenticateWithApple(request));
     }
 
 }
