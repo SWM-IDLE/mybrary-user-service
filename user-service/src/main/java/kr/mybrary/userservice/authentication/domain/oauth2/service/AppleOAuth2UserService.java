@@ -21,6 +21,7 @@ import kr.mybrary.userservice.user.persistence.SocialType;
 import kr.mybrary.userservice.user.persistence.User;
 import kr.mybrary.userservice.user.persistence.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONObject;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -51,17 +52,15 @@ import static kr.mybrary.userservice.global.constant.ImageConstant.*;
 @RequiredArgsConstructor
 @Service
 @Slf4j
+@Setter
 public class AppleOAuth2UserService {
 
     @Value("${spring.security.oauth2.client.registration.apple.client-id}")
     private String APPLE_CLIENT_ID;
-
     @Value("${spring.security.oauth2.client.registration.apple.client-secret}")
     private String APPLE_CLIENT_SECRET;
-
     @Value("${spring.security.oauth2.client.registration.apple.redirect-uri}")
     private String APPLE_REDIRECT_URI;
-
     @Value("${spring.security.oauth2.client.registration.apple.authorization-grant-type}")
     private String APPLE_AUTHORIZATION_GRANT_TYPE;
 
@@ -76,7 +75,6 @@ public class AppleOAuth2UserService {
         User user = getAppleUserByRequest(request);
         String refreshToken = jwtUtil.createRefreshToken(LocalDateTime.now());
         redisUtil.set(user.getLoginId(), refreshToken, Duration.ofDays(REFRESH_TOKEN_EXPIRATION));
-
         return UriComponentsBuilder.fromUriString(CALLBACK_URL)
                 .queryParam(ACCESS_TOKEN_PARAMETER, jwtUtil.createAccessToken(user.getLoginId(), LocalDateTime.now()))
                 .queryParam(REFRESH_TOKEN_PARAMETER, refreshToken)
@@ -96,7 +94,7 @@ public class AppleOAuth2UserService {
             throw new AppleCodeNotFoundException();
         }
         AppleOAuth2TokenServiceResponse tokenResponse = appleOAuth2ServiceClient.getAppleToken(APPLE_CLIENT_ID,
-                createAppleClientSecret(APPLE_CLIENT_ID, APPLE_CLIENT_SECRET), request.getParameter(CODE),
+                createAppleClientSecret(), request.getParameter(CODE),
                 APPLE_AUTHORIZATION_GRANT_TYPE, APPLE_REDIRECT_URI);
         return getExistingAppleUser(String.valueOf(parseAppleToken(tokenResponse).get(SUB)));
     }
@@ -115,8 +113,7 @@ public class AppleOAuth2UserService {
             throw new AppleCodeNotFoundException();
         }
         AppleOAuth2TokenServiceResponse tokenResponse = appleOAuth2ServiceClient.getAppleToken(APPLE_CLIENT_ID,
-                createAppleClientSecret(APPLE_CLIENT_ID, APPLE_CLIENT_SECRET), request.getParameter(CODE),
-                APPLE_AUTHORIZATION_GRANT_TYPE, APPLE_REDIRECT_URI);
+                createAppleClientSecret(), request.getParameter(CODE), APPLE_AUTHORIZATION_GRANT_TYPE, APPLE_REDIRECT_URI);
 
         JSONObject payload = parseAppleToken(tokenResponse);
         AppleOAuth2TokenInfo appleOAuth2TokenInfo = AppleOAuth2TokenInfo.builder()
@@ -171,17 +168,17 @@ public class AppleOAuth2UserService {
     }
 
     public void withdrawApple(String socialId) {
-        String clientSecret = createAppleClientSecret(APPLE_CLIENT_ID, APPLE_CLIENT_SECRET);
+        String clientSecret = createAppleClientSecret();
         String refreshToken = (String) redisUtil.get(APPLE_TOKEN_PREFIX + socialId);
         appleOAuth2ServiceClient.revokeAppleToken(APPLE_CLIENT_ID, clientSecret, refreshToken, TOKEN_TYPE_HINT_REFRESH_TOKEN);
         redisUtil.delete(APPLE_TOKEN_PREFIX + socialId);
     }
 
-    private String createAppleClientSecret(String clientId, String clientSecret) {
-        String[] secretKeyResourceArr = clientSecret.split("/");
+    private String createAppleClientSecret() {
+        String[] secretKeyResourceArr = APPLE_CLIENT_SECRET.split("/");
         String appleKeyId = secretKeyResourceArr[1];
         String appleTeamId = secretKeyResourceArr[2];
-        String appleClientId = clientId;
+        String appleClientId = APPLE_CLIENT_ID;
 
         JWSHeader header = new JWSHeader.Builder(JWSAlgorithm.ES256).keyID(appleKeyId).build();
         JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
