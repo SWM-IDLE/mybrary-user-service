@@ -71,6 +71,15 @@ spring:
             scope: profile_nickname, profile_image
             client-name: Kakao
 
+          apple:
+            client-id: ${APPLE_CLIENT_ID}
+            client-secret: ${APPLE_CLIENT_SECRET}
+            redirect-uri: https://f97d-1-235-157-76.ngrok-free.app/auth/v1/apple/callback
+            authorization-grant-type: authorization_code
+            client-authentication-method: POST
+            scope: name, email
+            client-name: Apple
+
         provider:
           naver:
             authorization_uri: https://nid.naver.com/oauth2.0/authorize
@@ -84,6 +93,11 @@ spring:
             user-info-uri: https://kapi.kakao.com/v2/user/me
             user-name-attribute: id
 
+          apple:
+            authorization_uri: https://appleid.apple.com/auth/authorize?response_mode=form_post
+            token_uri: https://appleid.apple.com/auth/token
+            user_name_attribute: sub
+
   cloud:
     aws:
       s3:
@@ -96,6 +110,14 @@ spring:
         auto: false
       stack:
         auto: false
+
+    openfeign:
+      client:
+        config:
+          bookClient:
+            url: ${BOOK_CLIENT_URL}
+          appleOAuth2Client:
+            url: https://appleid.apple.com
 
   servlet:
       multipart:

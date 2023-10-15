@@ -6,6 +6,7 @@ on:
       - develop
     paths:
       - 'user-service/**'
+      - '.github/workflows/**'
 
 jobs:
   build:
@@ -31,9 +32,12 @@ jobs:
           spring.security.oauth2.client.registration.naver.client-id: ${{ secrets.NAVER_CLIENT_ID }} 
           spring.security.oauth2.client.registration.naver.client-secret: ${{ secrets.NAVER_CLIENT_SECRET }} 
           spring.security.oauth2.client.registration.kakao.client-id: ${{ secrets.KAKAO_CLIENT_ID }} 
-          spring.security.oauth2.client.registration.kakao.client-secret: ${{ secrets.KAKAO_CLIENT_SECRET }} 
+          spring.security.oauth2.client.registration.kakao.client-secret: ${{ secrets.KAKAO_CLIENT_SECRET }}
+          spring.security.oauth2.client.registration.apple.client-id: ${{ secrets.APPLE_CLIENT_ID }}
+          spring.security.oauth2.client.registration.apple.client-secret: ${{ secrets.APPLE_CLIENT_SECRET }}
           spring.cloud.aws.credentials.access-key: ${{ secrets.AWS_ACCESS_KEY }}
           spring.cloud.aws.credentials.secret-key: ${{ secrets.AWS_SECRET_KEY }}
+          spring.cloud.openfeign.client.config.bookClient.url: ${{ secrets.BOOK_CLIENT_URL }}
           jwt.secretKey: ${{ secrets.JWT_SECRET_KEY }}
           
       - name: Setup Bootstrap Yaml
@@ -48,6 +52,12 @@ jobs:
         run: |
             mkdir -p build/resources/main/static/docs
             echo "test" > build/resources/main/static/docs/user-service.json
+
+      - name: Set up Apple PrivateKey
+        working-directory: user-service
+        run: |
+          mkdir -p src/main/resources/apple
+          echo -e ${{ secrets.APPLE_AUTH_PRIVATE_KEY }} > src/main/resources/apple/AuthKey_8LCJC23RYD.p8
                   
       - name: Run Openapi3
         working-directory: user-service

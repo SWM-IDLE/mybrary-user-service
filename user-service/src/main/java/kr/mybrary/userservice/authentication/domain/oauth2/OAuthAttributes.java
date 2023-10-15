@@ -2,10 +2,8 @@ package kr.mybrary.userservice.authentication.domain.oauth2;
 
 import java.util.Map;
 import java.util.UUID;
-import kr.mybrary.userservice.authentication.domain.oauth2.userinfo.GoogleOAuth2UserInfo;
-import kr.mybrary.userservice.authentication.domain.oauth2.userinfo.KakaoOAuth2UserInfo;
-import kr.mybrary.userservice.authentication.domain.oauth2.userinfo.NaverOAuth2UserInfo;
-import kr.mybrary.userservice.authentication.domain.oauth2.userinfo.OAuth2UserInfo;
+
+import kr.mybrary.userservice.authentication.domain.oauth2.userinfo.*;
 import kr.mybrary.userservice.user.persistence.Role;
 import kr.mybrary.userservice.user.persistence.SocialType;
 import kr.mybrary.userservice.user.persistence.User;
@@ -80,6 +78,5 @@ public class OAuthAttributes {
                 .role(Role.USER)
                 .build();
     }
-
 
 }

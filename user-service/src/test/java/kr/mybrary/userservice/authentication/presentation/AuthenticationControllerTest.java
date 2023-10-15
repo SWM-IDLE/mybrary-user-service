@@ -2,8 +2,10 @@ package kr.mybrary.userservice.authentication.presentation;
 
 import com.epages.restdocs.apispec.ResourceSnippetParameters;
 import com.epages.restdocs.apispec.Schema;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import kr.mybrary.userservice.authentication.domain.AuthenticationService;
+import kr.mybrary.userservice.authentication.domain.oauth2.service.AppleOAuth2UserService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +13,7 @@ import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDoc
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
+import org.springframework.http.MediaType;
 import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders;
 import org.springframework.restdocs.payload.JsonFieldType;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -18,11 +21,9 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
 import static com.epages.restdocs.apispec.MockMvcRestDocumentationWrapper.document;
-import static com.epages.restdocs.apispec.ResourceDocumentation.headerWithName;
-import static com.epages.restdocs.apispec.ResourceDocumentation.resource;
+import static com.epages.restdocs.apispec.ResourceDocumentation.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 import static org.springframework.restdocs.operation.preprocess.Preprocessors.*;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -37,6 +38,8 @@ class AuthenticationControllerTest {
 
     @MockBean
     private AuthenticationService authenticationService;
+    @MockBean
+    private AppleOAuth2UserService appleOAuth2UserService;
 
     @Autowired
     private MockMvc mockMvc;
@@ -102,4 +105,51 @@ class AuthenticationControllerTest {
         );
 
     }
+
+    @DisplayName("애플 소셜 로그인을 처리한다.")
+    @Test
+    void callback() throws Exception {
+        // given
+        when(appleOAuth2UserService.authenticateWithApple(any(HttpServletRequest.class)))
+                .thenReturn("kr.mybrary://?Authorization=accessToken&Authorization-Refresh=refreshToken");
+
+        // when
+        ResultActions actions = mockMvc.perform(
+                RestDocumentationRequestBuilders.post(BASE_URL + "/apple/callback")
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .with(csrf())
+                        .param("code", "code")
+                        .param("state", "state")
+        );
+
+        // then
+        verify(appleOAuth2UserService).authenticateWithApple(any());
+
+        actions.andExpect(status().is3xxRedirection())
+                .andExpect(header().exists("Location"))
+                .andExpect(header().string("Location", "kr.mybrary://?Authorization=accessToken&Authorization-Refresh=refreshToken"));
+
+        // docs
+        actions.andDo(document("apple-callback",
+                preprocessRequest(prettyPrint()),
+                preprocessResponse(prettyPrint()),
+                resource(
+                        ResourceSnippetParameters.builder()
+                                .tag("apple-callback")
+                                .summary("애플 소셜 로그인을 처리한다.")
+                                .requestSchema(Schema.schema("apple_callback_request"))
+                                .formParameters(
+                                        parameterWithName("code").description("인증 코드"),
+                                        parameterWithName("state").description("인증 상태"),
+                                        parameterWithName("_csrf").description("CSRF 토큰")
+                                )
+                                .responseSchema(Schema.schema("apple_callback_response"))
+                                .responseHeaders(
+                                        headerWithName("Location").description("애플 소셜 로그인 성공 시 리다이렉트 될 URL")
+                                )
+                                .build()
+                ))
+        );
+    }
+
 }
