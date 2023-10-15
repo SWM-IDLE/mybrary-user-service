@@ -55,7 +55,11 @@ class AppleOAuth2UserServiceTest {
     @DisplayName("이미 가입된 애플 소셜 로그인 회원을 로그인한다.")
     void authenticateRegisteredUser() {
         // given
-        setUpAppleInfo();
+        appleOAuth2UserService.setAPPLE_CLIENT_SECRET("authKeyFile/keyId/teamId");
+        appleOAuth2UserService.setAPPLE_CLIENT_ID("clientId");
+        appleOAuth2UserService.setAPPLE_AUTHORIZATION_GRANT_TYPE("authorization_code");
+        appleOAuth2UserService.setAPPLE_REDIRECT_URI("https://user.mybrary.kr/oauth2/apple/callback");
+
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setParameter("code", "code");
 
@@ -106,7 +110,11 @@ class AppleOAuth2UserServiceTest {
     @DisplayName("이미 가입된 애플 소셜 로그인 회원을 로그인할 때 사용자를 찾을 수 없으면 예외가 발생한다.")
     void authenticateRegisteredUserNotFound() {
         // given
-        setUpAppleInfo();
+        appleOAuth2UserService.setAPPLE_CLIENT_SECRET("authKeyFile/keyId/teamId");
+        appleOAuth2UserService.setAPPLE_CLIENT_ID("clientId");
+        appleOAuth2UserService.setAPPLE_AUTHORIZATION_GRANT_TYPE("authorization_code");
+        appleOAuth2UserService.setAPPLE_REDIRECT_URI("https://user.mybrary.kr/oauth2/apple/callback");
+
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setParameter("code", "code");
 
@@ -133,7 +141,11 @@ class AppleOAuth2UserServiceTest {
     @DisplayName("최초 애플 소셜 로그인 회원을 회원 가입 후 로그인한다.")
     void authenticateNewUser() throws Exception {
         // given
-        setUpAppleInfo();
+        appleOAuth2UserService.setAPPLE_CLIENT_SECRET("authKeyFile/keyId/teamId");
+        appleOAuth2UserService.setAPPLE_CLIENT_ID("clientId");
+        appleOAuth2UserService.setAPPLE_AUTHORIZATION_GRANT_TYPE("authorization_code");
+        appleOAuth2UserService.setAPPLE_REDIRECT_URI("https://user.mybrary.kr/oauth2/apple/callback");
+
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setParameter("code", "code");
         request.setParameter("user", "user");
@@ -215,7 +227,11 @@ class AppleOAuth2UserServiceTest {
     @DisplayName("애플 소셜 로그인 회원의 토큰을 만료하고 연동을 해제한다.")
     void withdrawApple() {
         // given
-        setUpAppleInfo();
+        appleOAuth2UserService.setAPPLE_CLIENT_SECRET("authKeyFile/keyId/teamId");
+        appleOAuth2UserService.setAPPLE_CLIENT_ID("clientId");
+        appleOAuth2UserService.setAPPLE_AUTHORIZATION_GRANT_TYPE("authorization_code");
+        appleOAuth2UserService.setAPPLE_REDIRECT_URI("https://user.mybrary.kr/oauth2/apple/callback");
+
         given(redisUtil.get(any())).willReturn("refreshToken");
         doNothing().when(appleOAuth2ServiceClient).revokeAppleToken(any(), any(), any(), any());
         doNothing().when(redisUtil).delete(any());
@@ -227,14 +243,6 @@ class AppleOAuth2UserServiceTest {
         verify(redisUtil, times(1)).get(any());
         verify(appleOAuth2ServiceClient, times(1)).revokeAppleToken(any(), any(), any(), any());
         verify(redisUtil, times(1)).delete(any());
-    }
-
-    @Test
-    private void setUpAppleInfo() {
-        appleOAuth2UserService.setAPPLE_CLIENT_SECRET("authKeyFile/keyId/teamId");
-        appleOAuth2UserService.setAPPLE_CLIENT_ID("clientId");
-        appleOAuth2UserService.setAPPLE_AUTHORIZATION_GRANT_TYPE("authorization_code");
-        appleOAuth2UserService.setAPPLE_REDIRECT_URI("https://user.mybrary.kr/oauth2/apple/callback");
     }
 
 }
