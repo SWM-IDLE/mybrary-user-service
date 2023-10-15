@@ -229,6 +229,7 @@ class AppleOAuth2UserServiceTest {
         verify(redisUtil, times(1)).delete(any());
     }
 
+    @Test
     private void setUpAppleInfo() {
         appleOAuth2UserService.setAPPLE_CLIENT_SECRET("authKeyFile/keyId/teamId");
         appleOAuth2UserService.setAPPLE_CLIENT_ID("clientId");
