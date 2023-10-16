@@ -2,14 +2,13 @@ package kr.mybrary.userservice.authentication.domain.oauth2.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.nimbusds.jose.JWSAlgorithm;
-import com.nimbusds.jose.JWSHeader;
-import com.nimbusds.jose.JWSSigner;
-import com.nimbusds.jose.crypto.ECDSASigner;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import jakarta.servlet.http.HttpServletRequest;
-import kr.mybrary.userservice.authentication.domain.exception.*;
+import kr.mybrary.userservice.authentication.domain.exception.AppleCodeNotFoundException;
+import kr.mybrary.userservice.authentication.domain.exception.AppleTokenParseException;
+import kr.mybrary.userservice.authentication.domain.exception.AppleUserInfoReadException;
+import kr.mybrary.userservice.authentication.domain.exception.AppleUserNotFoundException;
 import kr.mybrary.userservice.authentication.domain.oauth2.userinfo.AppleOAuth2TokenInfo;
 import kr.mybrary.userservice.authentication.domain.oauth2.userinfo.AppleOAuth2UserInfo;
 import kr.mybrary.userservice.client.apple.api.AppleOAuth2ServiceClient;
@@ -25,25 +24,15 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONObject;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.bouncycastle.util.io.pem.PemObject;
-import org.bouncycastle.util.io.pem.PemReader;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.Resource;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.io.FileReader;
-import java.io.IOException;
-import java.security.KeyFactory;
-import java.security.interfaces.ECPrivateKey;
-import java.security.spec.PKCS8EncodedKeySpec;
 import java.text.ParseException;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.UUID;
 
 import static kr.mybrary.userservice.authentication.domain.oauth2.constant.AppleOAuth2Parameter.*;
@@ -65,6 +54,7 @@ public class AppleOAuth2UserService {
     private String APPLE_AUTHORIZATION_GRANT_TYPE;
 
     private final AppleOAuth2ServiceClient appleOAuth2ServiceClient;
+    private final AppleOAuth2UtilService appleOAuth2UtilService;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
@@ -94,7 +84,7 @@ public class AppleOAuth2UserService {
             throw new AppleCodeNotFoundException();
         }
         AppleOAuth2TokenServiceResponse tokenResponse = appleOAuth2ServiceClient.getAppleToken(APPLE_CLIENT_ID,
-                createAppleClientSecret(), request.getParameter(CODE),
+                appleOAuth2UtilService.createAppleClientSecret(APPLE_CLIENT_ID, APPLE_CLIENT_SECRET), request.getParameter(CODE),
                 APPLE_AUTHORIZATION_GRANT_TYPE, APPLE_REDIRECT_URI);
         return getExistingAppleUser(String.valueOf(parseAppleToken(tokenResponse).get(SUB)));
     }
@@ -113,7 +103,7 @@ public class AppleOAuth2UserService {
             throw new AppleCodeNotFoundException();
         }
         AppleOAuth2TokenServiceResponse tokenResponse = appleOAuth2ServiceClient.getAppleToken(APPLE_CLIENT_ID,
-                createAppleClientSecret(), request.getParameter(CODE), APPLE_AUTHORIZATION_GRANT_TYPE, APPLE_REDIRECT_URI);
+                appleOAuth2UtilService.createAppleClientSecret(APPLE_CLIENT_ID, APPLE_CLIENT_SECRET), request.getParameter(CODE), APPLE_AUTHORIZATION_GRANT_TYPE, APPLE_REDIRECT_URI);
 
         JSONObject payload = parseAppleToken(tokenResponse);
         AppleOAuth2TokenInfo appleOAuth2TokenInfo = AppleOAuth2TokenInfo.builder()
@@ -168,52 +158,10 @@ public class AppleOAuth2UserService {
     }
 
     public void withdrawApple(String socialId) {
-        String clientSecret = createAppleClientSecret();
+        String clientSecret = appleOAuth2UtilService.createAppleClientSecret(APPLE_CLIENT_ID, APPLE_CLIENT_SECRET);
         String refreshToken = (String) redisUtil.get(APPLE_TOKEN_PREFIX + socialId);
         appleOAuth2ServiceClient.revokeAppleToken(APPLE_CLIENT_ID, clientSecret, refreshToken, TOKEN_TYPE_HINT_REFRESH_TOKEN);
         redisUtil.delete(APPLE_TOKEN_PREFIX + socialId);
-    }
-
-    private String createAppleClientSecret() {
-        String[] secretKeyResourceArr = APPLE_CLIENT_SECRET.split("/");
-        String appleKeyId = secretKeyResourceArr[1];
-        String appleTeamId = secretKeyResourceArr[2];
-        String appleClientId = APPLE_CLIENT_ID;
-
-        JWSHeader header = new JWSHeader.Builder(JWSAlgorithm.ES256).keyID(appleKeyId).build();
-        JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
-                .issuer(appleTeamId)
-                .subject(appleClientId)
-                .issueTime(new Date())
-                .expirationTime(new Date(System.currentTimeMillis() + 1000 * 60 * 5))
-                .audience(APPLE_AUTH_URL)
-                .build();
-
-        SignedJWT jwt = new SignedJWT(header, claimsSet);
-        PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(readPrivateKey(APPLE_KEY_PATH));
-
-        try {
-            KeyFactory kf = KeyFactory.getInstance("EC");
-            ECPrivateKey privateKey = (ECPrivateKey) kf.generatePrivate(spec);
-            JWSSigner jwsSigner = new ECDSASigner(privateKey);
-            jwt.sign(jwsSigner);
-        } catch (Exception e) {
-            throw new AppleClientSecretNotCreatedException();
-        }
-
-        return jwt.serialize();
-    }
-
-    private byte[] readPrivateKey(String keyPath) {
-        Resource resource = new ClassPathResource(keyPath);
-        try {
-            FileReader keyReader = new FileReader(resource.getFile());
-            PemReader pemReader = new PemReader(keyReader);
-            PemObject pemObject = pemReader.readPemObject();
-            return pemObject.getContent();
-        } catch (IOException e) {
-            throw new ApplePrivateKeyReadException();
-        }
     }
 
 }
