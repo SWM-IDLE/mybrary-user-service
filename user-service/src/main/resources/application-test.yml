@@ -13,6 +13,25 @@ spring:
         format_sql: true
     database-platform: org.hibernate.dialect.H2Dialect
 
+  security:
+    oauth2:
+      client:
+        registration:
+          apple:
+            client-id: appleClientId
+            client-secret: appleClientSecret
+            redirect-uri: appleRedirectUri
+            client-authentication-method: POST
+            authorization-grant-type: authorization_code
+            scope: name, email
+            client-name: Apple
+
+        provider:
+            apple:
+                authorization-uri: https://appleid.apple.com/auth/authorize?response_mode=form_post
+                token-uri: https://appleid.apple.com/auth/token
+                user-name-attribute: sub
+
     sql:
       init:
         mode: never
