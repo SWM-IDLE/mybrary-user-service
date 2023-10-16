@@ -50,8 +50,8 @@ jobs:
       - name: Set up Apple PrivateKey
         working-directory: user-service
         run: |
-          mkdir -p src/main/resources/apple
-          echo -e ${{ secrets.APPLE_AUTH_PRIVATE_KEY }} > src/main/resources/apple/AuthKey_8LCJC23RYD.p8
+          mkdir -p build/resources/main/apple
+          echo -e ${{ secrets.APPLE_AUTH_PRIVATE_KEY }} > build/resources/main/apple/AuthKey_8LCJC23RYD.p8
 
       - name: Test with Gradle
         working-directory: user-service
