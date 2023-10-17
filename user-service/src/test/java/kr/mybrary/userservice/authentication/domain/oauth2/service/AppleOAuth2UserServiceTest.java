@@ -156,7 +156,7 @@ class AppleOAuth2UserServiceTest {
         request.setParameter("user", "user");
 
         given(objectMapper.convertValue(any(), (Class<Object>) any())).willReturn(mock(JSONObject.class));
-        given(objectMapper.readValue(eq("user"), eq(AppleOAuth2UserInfo.class))).willReturn(AppleOAuth2UserInfo.builder()
+        given(objectMapper.readValue("user", AppleOAuth2UserInfo.class)).willReturn(AppleOAuth2UserInfo.builder()
                 .email("email")
                 .name(AppleOAuth2UserInfo.Name.builder().lastName("lastName").firstName("firstName").build())
                 .build());
@@ -180,7 +180,7 @@ class AppleOAuth2UserServiceTest {
 
         // then
         assertEquals("kr.mybrary://?Authorization=accessToken&Authorization-Refresh=refreshToken", redirectUrl);
-        verify(objectMapper, times(1)).readValue(eq("user"), eq(AppleOAuth2UserInfo.class));
+        verify(objectMapper, times(1)).readValue("user", AppleOAuth2UserInfo.class);
         verify(objectMapper, times(1)).convertValue(any(), (Class<Object>) any());
         verify(appleOAuth2ServiceClient, times(1)).getAppleToken(anyString(), anyString(), anyString(), anyString(), anyString());
         verify(appleOAuth2UtilService, times(1)).createAppleClientSecret(anyString(), anyString());
@@ -216,7 +216,7 @@ class AppleOAuth2UserServiceTest {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setParameter("code", "code");
         request.setParameter("user", "user");
-        given(objectMapper.readValue(eq("user"), eq(AppleOAuth2UserInfo.class))).willThrow(JsonProcessingException.class);
+        given(objectMapper.readValue("user", AppleOAuth2UserInfo.class)).willThrow(JsonProcessingException.class);
 
         // when
         assertThatThrownBy(() -> appleOAuth2UserService.authenticateWithApple(request))
@@ -227,7 +227,7 @@ class AppleOAuth2UserServiceTest {
 
         // then
         verify(appleOAuth2ServiceClient, never()).getAppleToken(anyString(), anyString(), anyString(), anyString(), anyString());
-        verify(objectMapper, times(1)).readValue(eq("user"), eq(AppleOAuth2UserInfo.class));
+        verify(objectMapper, times(1)).readValue("user", AppleOAuth2UserInfo.class);
     }
 
     @Test

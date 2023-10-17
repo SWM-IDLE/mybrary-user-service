@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.io.IOException;
+
 @RestController
 @RequestMapping("/auth/v1")
 @RequiredArgsConstructor
@@ -31,7 +33,7 @@ public class AuthenticationController {
     }
 
     @PostMapping("/apple/callback")
-    public void callback(HttpServletRequest request, HttpServletResponse response) throws Exception {
+    public void callback(HttpServletRequest request, HttpServletResponse response) throws IOException {
         response.sendRedirect(appleOAuth2UserService.authenticateWithApple(request));
     }
 
