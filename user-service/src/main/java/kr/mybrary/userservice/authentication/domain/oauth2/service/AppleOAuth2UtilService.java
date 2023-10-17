@@ -63,9 +63,8 @@ public class AppleOAuth2UtilService {
 
     private byte[] readPrivateKey(String keyPath) {
         Resource resource = new ClassPathResource(keyPath);
-        try {
-            FileReader keyReader = new FileReader(resource.getFile());
-            PemReader pemReader = new PemReader(keyReader);
+        try (FileReader keyReader = new FileReader(resource.getFile());
+             PemReader pemReader = new PemReader(keyReader)) {
             PemObject pemObject = pemReader.readPemObject();
             return pemObject.getContent();
         } catch (IOException e) {

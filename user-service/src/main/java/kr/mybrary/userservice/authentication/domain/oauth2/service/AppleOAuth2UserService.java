@@ -23,13 +23,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONObject;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.security.SecureRandom;
 import java.text.ParseException;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -142,13 +142,19 @@ public class AppleOAuth2UserService {
                 .loginId(UUID.randomUUID().toString())
                 .password(UUID.randomUUID().toString())
                 .email(appleOAuth2TokenInfo.getEmail())
-                .nickname(appleOAuth2TokenInfo.getFullName() + RandomStringUtils.randomNumeric(5))
+                .nickname(appleOAuth2TokenInfo.getFullName() + generateSecureRandomNumeric())
                 .introduction("")
                 .role(Role.USER)
                 .build();
         createdUser.updatePassword(passwordEncoder.encode(createdUser.getPassword()));
         setDefaultProfileImage(createdUser);
         return userRepository.save(createdUser);
+    }
+
+    private String generateSecureRandomNumeric() {
+        SecureRandom secureRandom = new SecureRandom();
+        int randomValue = secureRandom.nextInt(90000) + 10000;
+        return String.valueOf(randomValue);
     }
 
     private void setDefaultProfileImage(User createdUser) {
