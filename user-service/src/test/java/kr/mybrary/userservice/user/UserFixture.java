@@ -16,6 +16,11 @@ public enum UserFixture {
             "socialId", SocialType.GOOGLE, "email@mail.com", "introduction", "profileImageUrl",
             "profileImageThumbnailTinyUrl", "profileImageThumbnailSmallUrl",
             Collections.emptyList(), Collections.emptyList()),
+
+    APPLE_USER(1L, "loginId", "nickname", "encodedPassword", Role.USER,
+            "socialId", SocialType.APPLE, "email@mail.com", "introduction", "profileImageUrl",
+            "profileImageThumbnailTinyUrl", "profileImageThumbnailSmallUrl",
+            Collections.emptyList(), Collections.emptyList()),
     
     USER_WITHOUT_PROFILE_IMAGE_URL(1L, "loginId", "nickname", "encodedPassword", Role.USER,
             "socialId", SocialType.GOOGLE, "email@mail.com", "introduction", null,

@@ -1,5 +1,6 @@
 package kr.mybrary.userservice.user.domain;
 
+import kr.mybrary.userservice.authentication.domain.oauth2.service.AppleOAuth2UserService;
 import kr.mybrary.userservice.user.UserFixture;
 import kr.mybrary.userservice.user.UserTestData;
 import kr.mybrary.userservice.user.domain.dto.request.*;
@@ -36,8 +37,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class UserServiceImplTest {
@@ -48,6 +48,8 @@ class UserServiceImplTest {
     PasswordEncoder passwordEncoder;
     @Mock
     StorageService storageService;
+    @Mock
+    AppleOAuth2UserService appleOAuth2UserService;
     @InjectMocks
     UserServiceImpl userService;
 
@@ -835,6 +837,23 @@ class UserServiceImplTest {
         // Then
         verify(userRepository).findByLoginId(LOGIN_ID);
         verify(userRepository).delete(user);
+    }
+
+    @Test
+    @DisplayName("로그인 아이디로 애플 사용자 계정을 삭제하고 애플 소셜 로그인 연동을 해제한다")
+    void deleteAppleAccount() {
+        // Given
+        User user = UserFixture.APPLE_USER.getUser();
+        given(userRepository.findByLoginId(LOGIN_ID)).willReturn(Optional.of(user));
+        doNothing().when(appleOAuth2UserService).withdrawApple(user.getSocialId());
+
+        // When
+        userService.deleteAccount(LOGIN_ID);
+
+        // Then
+        verify(userRepository).findByLoginId(LOGIN_ID);
+        verify(userRepository).delete(user);
+        verify(appleOAuth2UserService).withdrawApple(user.getSocialId());
     }
 
     @Test
