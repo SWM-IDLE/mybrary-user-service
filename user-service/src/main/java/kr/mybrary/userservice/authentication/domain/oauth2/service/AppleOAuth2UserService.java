@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.security.SecureRandom;
@@ -40,6 +41,7 @@ import static kr.mybrary.userservice.global.constant.ImageConstant.*;
 
 @RequiredArgsConstructor
 @Service
+@Transactional
 @Slf4j
 @Setter
 public class AppleOAuth2UserService {
@@ -60,6 +62,7 @@ public class AppleOAuth2UserService {
     private final JwtUtil jwtUtil;
     private final RedisUtil redisUtil;
     private final ObjectMapper objectMapper;
+    private static final SecureRandom secureRandom = new SecureRandom();
 
     public String authenticateWithApple(HttpServletRequest request) {
         User user = getAppleUserByRequest(request);
@@ -80,28 +83,27 @@ public class AppleOAuth2UserService {
     }
 
     private User getAppleUserFromRequest(HttpServletRequest request) {
-        if (request.getParameter(CODE) == null) {
-            throw new AppleCodeNotFoundException();
-        }
+        checkForAppleCode(request);
         AppleOAuth2TokenServiceResponse tokenResponse = appleOAuth2ServiceClient.getAppleToken(APPLE_CLIENT_ID,
                 appleOAuth2UtilService.createAppleClientSecret(APPLE_CLIENT_ID, APPLE_CLIENT_SECRET), request.getParameter(CODE),
                 APPLE_AUTHORIZATION_GRANT_TYPE, APPLE_REDIRECT_URI);
         return getExistingAppleUser(String.valueOf(parseAppleToken(tokenResponse).get(SUB)));
     }
 
-    private User getExistingAppleUser(String socialId) {
-        User findUser = userRepository.findBySocialTypeAndSocialId(SocialType.APPLE, socialId).orElse(null);
-        if (findUser == null) {
-            throw new AppleUserNotFoundException();
+    private static void checkForAppleCode(HttpServletRequest request) {
+        if (request.getParameter(CODE) == null) {
+            throw new AppleCodeNotFoundException();
         }
-        return findUser;
+    }
+
+    private User getExistingAppleUser(String socialId) {
+        return userRepository.findBySocialTypeAndSocialId(SocialType.APPLE, socialId)
+                .orElseThrow(AppleUserNotFoundException::new);
     }
 
     private User signUpAndGetAppleUserFromRequest(HttpServletRequest request) {
         AppleOAuth2UserInfo appleOAuth2UserInfo = getAppleOAuth2UserInfo(request);
-        if (request.getParameter(CODE) == null) {
-            throw new AppleCodeNotFoundException();
-        }
+        checkForAppleCode(request);
         AppleOAuth2TokenServiceResponse tokenResponse = appleOAuth2ServiceClient.getAppleToken(APPLE_CLIENT_ID,
                 appleOAuth2UtilService.createAppleClientSecret(APPLE_CLIENT_ID, APPLE_CLIENT_SECRET), request.getParameter(CODE), APPLE_AUTHORIZATION_GRANT_TYPE, APPLE_REDIRECT_URI);
 
@@ -140,19 +142,17 @@ public class AppleOAuth2UserService {
                 .socialType(SocialType.APPLE)
                 .socialId(appleOAuth2TokenInfo.getId())
                 .loginId(UUID.randomUUID().toString())
-                .password(UUID.randomUUID().toString())
+                .password(passwordEncoder.encode(UUID.randomUUID().toString()))
                 .email(appleOAuth2TokenInfo.getEmail())
                 .nickname(appleOAuth2TokenInfo.getFullName() + generateSecureRandomNumeric())
                 .introduction("")
                 .role(Role.USER)
                 .build();
-        createdUser.updatePassword(passwordEncoder.encode(createdUser.getPassword()));
         setDefaultProfileImage(createdUser);
         return userRepository.save(createdUser);
     }
 
     private String generateSecureRandomNumeric() {
-        SecureRandom secureRandom = new SecureRandom();
         int randomValue = secureRandom.nextInt(90000) + 10000;
         return String.valueOf(randomValue);
     }

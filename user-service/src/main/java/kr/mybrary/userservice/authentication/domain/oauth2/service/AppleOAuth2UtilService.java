@@ -6,6 +6,7 @@ import com.nimbusds.jose.JWSSigner;
 import com.nimbusds.jose.crypto.ECDSASigner;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+import kr.mybrary.userservice.authentication.domain.exception.AppleClientSecretFormatException;
 import kr.mybrary.userservice.authentication.domain.exception.AppleClientSecretNotCreatedException;
 import kr.mybrary.userservice.authentication.domain.exception.ApplePrivateKeyReadException;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +35,7 @@ import static kr.mybrary.userservice.authentication.domain.oauth2.constant.Apple
 public class AppleOAuth2UtilService {
 
     public String createAppleClientSecret(String clientId, String clientSecret) {
+        checkClientSecret(clientSecret);
         String[] secretKeyResourceArr = clientSecret.split("/");
         String appleKeyId = secretKeyResourceArr[1];
         String appleTeamId = secretKeyResourceArr[2];
@@ -59,6 +61,12 @@ public class AppleOAuth2UtilService {
             throw new AppleClientSecretNotCreatedException();
         }
         return jwt.serialize();
+    }
+
+    private void checkClientSecret(String clientSecret) {
+        if(clientSecret.split("/").length != 3) {
+            throw new AppleClientSecretFormatException();
+        }
     }
 
     private byte[] readPrivateKey(String keyPath) {
