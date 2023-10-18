@@ -6,12 +6,14 @@ on:
       - master
     paths:
       - 'user-service/**'
+      - '.github/workflows/**'
   pull_request:
     types: [opened, synchronize, reopened]
     branches:
       - develop
     paths:
       - 'user-service/**'
+      - '.github/workflows/**'
 jobs:
   build:
     name: Build and analyze
@@ -37,8 +39,11 @@ jobs:
           spring.security.oauth2.client.registration.naver.client-secret: ${{ secrets.NAVER_CLIENT_SECRET }}
           spring.security.oauth2.client.registration.kakao.client-id: ${{ secrets.KAKAO_CLIENT_ID }}
           spring.security.oauth2.client.registration.kakao.client-secret: ${{ secrets.KAKAO_CLIENT_SECRET }}
+          spring.security.oauth2.client.registration.apple.client-id: ${{ secrets.APPLE_CLIENT_ID }}
+          spring.security.oauth2.client.registration.apple.client-secret: ${{ secrets.APPLE_CLIENT_SECRET }}
           spring.cloud.aws.credentials.access-key: ${{ secrets.AWS_ACCESS_KEY }}
           spring.cloud.aws.credentials.secret-key: ${{ secrets.AWS_SECRET_KEY }}
+          spring.cloud.openfeign.client.config.bookClient.url: ${{ secrets.BOOK_CLIENT_URL }}
           jwt.secretKey: ${{ secrets.JWT_SECRET_KEY }}
       - name: Setup Bootstrap Yaml
         uses: microsoft/variable-substitution@v1
@@ -46,6 +51,11 @@ jobs:
           files: user-service/src/main/resources/bootstrap.yml
         env:
           spring.profiles.active: test
+      - name: Set up Apple PrivateKey
+        working-directory: user-service
+        run: |
+          mkdir -p build/resources/main/apple
+          echo -e ${{ secrets.APPLE_AUTH_PRIVATE_KEY }} > build/resources/main/apple/AuthKey_8LCJC23RYD.p8
       - name: Cache SonarCloud packages
         uses: actions/cache@v3
         with:
