@@ -18,8 +18,8 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.security.KeyFactory;
 import java.security.interfaces.ECPrivateKey;
 import java.security.spec.PKCS8EncodedKeySpec;
@@ -73,10 +73,8 @@ public class AppleOAuth2UtilService {
         Resource resource = new ClassPathResource(keyPath);
         log.info("resource : {}", resource);
         log.info("resource.exists() : {}", resource.exists());
-        try {
-            FileReader keyReader = new FileReader(resource.getFile());
-            PemReader pemReader = new PemReader(keyReader);
-            log.info("keyReader : {}", keyReader);
+        try (InputStream inputStream = resource.getInputStream();
+             PemReader pemReader = new PemReader(new InputStreamReader(inputStream))) {
             log.info("pemReader : {}", pemReader);
             PemObject pemObject = pemReader.readPemObject();
             log.info("pemObject : {}", pemObject);
