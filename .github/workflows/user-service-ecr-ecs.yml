@@ -47,7 +47,7 @@ jobs:
         env:
           spring.profiles.active: test
 
-      - name: Set up Apple PrivateKey
+      - name: Setup Apple PrivateKey
         working-directory: user-service
         run: |
           mkdir -p src/main/resources/apple
