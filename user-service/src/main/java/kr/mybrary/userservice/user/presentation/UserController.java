@@ -81,6 +81,15 @@ public class UserController {
         );
     }
 
+    @GetMapping("/{userId}/profile/email")
+    public ResponseEntity<SuccessResponse<ProfileEmailServiceResponse>> getProfileEmail(
+            @PathVariable("userId") String userId) {
+        return ResponseEntity.ok().body(
+                SuccessResponse.of(HttpStatus.OK.toString(), "사용자의 로그인된 이메일 계정을 조회했습니다.",
+                        userService.getProfileEmail(userId))
+        );
+    }
+
     @GetMapping("/{userId}/followers")
     public ResponseEntity<SuccessResponse<FollowerServiceResponse>> getFollowers(
             @PathVariable("userId") String userId) {
