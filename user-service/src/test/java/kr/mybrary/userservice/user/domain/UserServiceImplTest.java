@@ -692,6 +692,40 @@ class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName("로그인 아이디로 사용자의 로그인된 이메일 계정을 조회한다")
+    void getProfileEmail() {
+        // Given
+        given(userRepository.findByLoginId(LOGIN_ID)).willReturn(Optional.of(UserFixture.COMMON_USER.getUser()));
+
+        // When
+        ProfileEmailServiceResponse profileEmailServiceResponse = userService.getProfileEmail(LOGIN_ID);
+
+        // Then
+        assertAll(
+                () -> assertThat(profileEmailServiceResponse.getEmail()).isEqualTo(UserFixture.COMMON_USER.getUser().getEmail())
+        );
+
+        verify(userRepository).findByLoginId(LOGIN_ID);
+    }
+
+    @Test
+    @DisplayName("로그인 아이디로 사용자의 로그인된 이메일 계정을 조회할 때, 이메일이 없으면 빈 문자열을 반환한다")
+    void getProfileEmailWithNoEmail() {
+        // Given
+        given(userRepository.findByLoginId(LOGIN_ID)).willReturn(Optional.of(UserFixture.USER_WITH_NO_EMAIL.getUser()));
+
+        // When
+        ProfileEmailServiceResponse profileEmailServiceResponse = userService.getProfileEmail(LOGIN_ID);
+
+        // Then
+        assertAll(
+                () -> assertThat(profileEmailServiceResponse.getEmail()).isEqualTo("")
+        );
+
+        verify(userRepository).findByLoginId(LOGIN_ID);
+    }
+
+    @Test
     @DisplayName("로그인 아이디로 사용자의 팔로워 목록을 조회한다")
     void getFollowers() {
         // Given
