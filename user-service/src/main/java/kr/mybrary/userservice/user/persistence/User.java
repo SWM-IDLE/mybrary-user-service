@@ -98,6 +98,10 @@ public class User extends BaseEntity {
         this.profileImageThumbnailSmallUrl = profileImageThumbnailSmallUrl;
     }
 
+    public boolean hasEmail() {
+        return this.email != null;
+    }
+
     public void follow(User target) {
         Follow follow = Follow.builder()
             .source(this)

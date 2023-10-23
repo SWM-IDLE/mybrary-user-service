@@ -719,7 +719,7 @@ class UserServiceImplTest {
 
         // Then
         assertAll(
-                () -> assertThat(profileEmailServiceResponse.getEmail()).isEqualTo("")
+                () -> assertThat(profileEmailServiceResponse.getEmail()).isEmpty()
         );
 
         verify(userRepository).findByLoginId(LOGIN_ID);

@@ -253,7 +253,7 @@ public class UserServiceImpl implements UserService {
     @NotNull
     private String getUserEmail(String loginId) {
         User user = getUser(loginId);
-        if(user.getEmail() == null) {
+        if(!user.hasEmail()) {
             return "";
         }
         return user.getEmail();
