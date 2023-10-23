@@ -1,18 +1,17 @@
 package kr.mybrary.userservice.authentication.domain.oauth2.handler;
 
-import static kr.mybrary.userservice.authentication.domain.oauth2.OAuth2Exception.SOCIAL_LOGIN_FAILED;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
+
+import java.io.IOException;
+
+import static kr.mybrary.userservice.authentication.domain.oauth2.OAuth2Exception.SOCIAL_LOGIN_FAILED;
 
 @Component
 @Slf4j

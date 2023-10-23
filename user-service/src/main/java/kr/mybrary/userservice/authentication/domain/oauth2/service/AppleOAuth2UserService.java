@@ -13,6 +13,7 @@ import kr.mybrary.userservice.authentication.domain.oauth2.userinfo.AppleOAuth2T
 import kr.mybrary.userservice.authentication.domain.oauth2.userinfo.AppleOAuth2UserInfo;
 import kr.mybrary.userservice.client.apple.api.AppleOAuth2ServiceClient;
 import kr.mybrary.userservice.client.apple.dto.AppleOAuth2TokenServiceResponse;
+import kr.mybrary.userservice.global.exception.ApplicationException;
 import kr.mybrary.userservice.global.util.JwtUtil;
 import kr.mybrary.userservice.global.util.RedisUtil;
 import kr.mybrary.userservice.user.persistence.Role;
@@ -64,14 +65,24 @@ public class AppleOAuth2UserService {
     private final ObjectMapper objectMapper;
     private static final SecureRandom secureRandom = new SecureRandom();
 
+    static final String ERROR_CODE = "errorCode";
+    static final String ERROR_MESSAGE = "errorMessage";
+
     public String authenticateWithApple(HttpServletRequest request) {
-        User user = getAppleUserByRequest(request);
-        String refreshToken = jwtUtil.createRefreshToken(LocalDateTime.now());
-        redisUtil.set(user.getLoginId(), refreshToken, Duration.ofDays(REFRESH_TOKEN_EXPIRATION));
-        return UriComponentsBuilder.fromUriString(CALLBACK_URL)
-                .queryParam(ACCESS_TOKEN_PARAMETER, jwtUtil.createAccessToken(user.getLoginId(), LocalDateTime.now()))
-                .queryParam(REFRESH_TOKEN_PARAMETER, refreshToken)
-                .toUriString();
+        try {
+            User user = getAppleUserByRequest(request);
+            String refreshToken = jwtUtil.createRefreshToken(LocalDateTime.now());
+            redisUtil.set(user.getLoginId(), refreshToken, Duration.ofDays(REFRESH_TOKEN_EXPIRATION));
+            return UriComponentsBuilder.fromUriString(CALLBACK_URL)
+                    .queryParam(ACCESS_TOKEN_PARAMETER, jwtUtil.createAccessToken(user.getLoginId(), LocalDateTime.now()))
+                    .queryParam(REFRESH_TOKEN_PARAMETER, refreshToken)
+                    .toUriString();
+        } catch(ApplicationException e) {
+            return UriComponentsBuilder.fromUriString(CALLBACK_URL)
+                    .queryParam(ERROR_CODE, e.getErrorCode())
+                    .queryParam(ERROR_MESSAGE, e.getErrorMessage())
+                    .toUriString();
+        }
     }
 
     @NotNull
