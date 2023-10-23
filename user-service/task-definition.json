@@ -19,6 +19,10 @@
         {
           "name": "CONFIG_SERVER_URI",
           "value": "http://10.0.3.105:8888"
+        },
+        {
+          "name": "TZ",
+          "value": "Asia/Seoul"
         }
       ],
       "mountPoints": [],
