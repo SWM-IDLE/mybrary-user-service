@@ -25,21 +25,12 @@ import java.util.ArrayList;
 import java.util.List;
 import kr.mybrary.userservice.user.domain.UserService;
 import kr.mybrary.userservice.user.domain.dto.request.*;
-import kr.mybrary.userservice.user.domain.dto.response.FollowResponse;
-import kr.mybrary.userservice.user.domain.dto.response.FollowStatusServiceResponse;
-import kr.mybrary.userservice.user.domain.dto.response.FollowerServiceResponse;
-import kr.mybrary.userservice.user.domain.dto.response.FollowingServiceResponse;
-import kr.mybrary.userservice.user.domain.dto.response.ProfileImageUrlServiceResponse;
-import kr.mybrary.userservice.user.domain.dto.response.ProfileServiceResponse;
-import kr.mybrary.userservice.user.domain.dto.response.SearchServiceResponse;
-import kr.mybrary.userservice.user.domain.dto.response.SignUpServiceResponse;
-import kr.mybrary.userservice.user.domain.dto.response.UserInfoServiceResponse;
+import kr.mybrary.userservice.user.domain.dto.response.*;
 import kr.mybrary.userservice.user.persistence.Role;
 import kr.mybrary.userservice.user.presentation.dto.request.FollowRequest;
 import kr.mybrary.userservice.user.presentation.dto.request.FollowerRequest;
 import kr.mybrary.userservice.user.presentation.dto.request.ProfileUpdateRequest;
 import kr.mybrary.userservice.user.presentation.dto.request.SignUpRequest;
-import kr.mybrary.userservice.user.presentation.dto.request.UserInfoRequest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -474,6 +465,55 @@ class UserControllerTest {
                                                 .description(MESSAGE_FIELD_DESCRIPTION),
                                         fieldWithPath("data.profileImageUrl").type(
                                                 JsonFieldType.STRING).description("기본 프로필 이미지 URL")
+                                )
+                                .build()
+                ))
+        );
+    }
+
+    @DisplayName("사용자의 로그인된 이메일 계정을 조회한다.")
+    @Test
+    void getProfileEmail() throws Exception {
+        // given
+        ProfileEmailServiceResponse profileEmailServiceResponse = ProfileEmailServiceResponse.builder()
+                .email("user@email")
+                .build();
+
+        given(userService.getProfileEmail(anyString())).willReturn(profileEmailServiceResponse);
+
+        // when
+        ResultActions actions = mockMvc.perform(
+                RestDocumentationRequestBuilders.get(BASE_URL+"/{userId}/profile/email", USER_ID));
+
+        // then
+        actions
+                .andExpect(status().is2xxSuccessful())
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
+                .andExpect(jsonPath("$.message").value("사용자의 로그인된 이메일 계정을 조회했습니다."))
+                .andExpect(jsonPath("$.data.email").value(profileEmailServiceResponse.getEmail()));
+
+        verify(userService).getProfileEmail(anyString());
+
+        // docs
+        actions.andDo(document("get-user-profile-email",
+                preprocessRequest(prettyPrint()),
+                preprocessResponse(prettyPrint()),
+                resource(
+                        ResourceSnippetParameters.builder()
+                                .tag("user-profile")
+                                .summary("사용자의 로그인된 이메일 계정을 조회한다.")
+                                .pathParameters(
+                                        parameterWithName("userId").description("사용자 아이디")
+                                )
+                                .responseSchema(
+                                        Schema.schema("get_user_profile_email_response_body"))
+                                .responseFields(
+                                        fieldWithPath("status").type(JsonFieldType.STRING)
+                                                .description(STATUS_FIELD_DESCRIPTION),
+                                        fieldWithPath("message").type(JsonFieldType.STRING)
+                                                .description(MESSAGE_FIELD_DESCRIPTION),
+                                        fieldWithPath("data.email").type(
+                                                JsonFieldType.STRING).description("사용자의 로그인된 이메일 계정")
                                 )
                                 .build()
                 ))

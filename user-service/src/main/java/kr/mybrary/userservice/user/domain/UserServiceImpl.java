@@ -244,6 +244,23 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(readOnly = true)
+    public ProfileEmailServiceResponse getProfileEmail(String loginId) {
+        return ProfileEmailServiceResponse.builder()
+                .email(getUserEmail(loginId))
+                .build();
+    }
+
+    @NotNull
+    private String getUserEmail(String loginId) {
+        User user = getUser(loginId);
+        if(!user.hasEmail()) {
+            return "";
+        }
+        return user.getEmail();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public FollowerServiceResponse getFollowers(String loginId) {
         return FollowerServiceResponse.builder()
                 .userId(loginId)

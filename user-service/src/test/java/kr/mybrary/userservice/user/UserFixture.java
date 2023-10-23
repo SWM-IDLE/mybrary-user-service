@@ -47,6 +47,11 @@ public enum UserFixture {
     USER_WITH_SIMILAR_NICKNAME(2L, "loginId123", "nickname123", "encodedPassword", Role.USER,
             "socialId123", SocialType.GOOGLE, "email@mail.com", "introduction", "profileImageUrl",
             "profileImageThumbnailTinyUrl", "profileImageThumbnailSmallUrl",
+            Collections.emptyList(), Collections.emptyList()),
+
+    USER_WITH_NO_EMAIL(1L, "loginId", "nickname", "encodedPassword", Role.USER,
+            "socialId", SocialType.GOOGLE, null, "introduction", "profileImageUrl",
+            "profileImageThumbnailTinyUrl", "profileImageThumbnailSmallUrl",
             Collections.emptyList(), Collections.emptyList());
 
     private final Long id;
