@@ -7,7 +7,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum OAuth2Exception {
 
-    SOCIAL_LOGIN_FAILED("U-08", "소셜 로그인에 실패하였습니다: %s");
+    SOCIAL_LOGIN_FAILED("U-08", "OAuth2 Login Failed: %s");
 
     private final String errorCode;
     private final String errorMessage;
