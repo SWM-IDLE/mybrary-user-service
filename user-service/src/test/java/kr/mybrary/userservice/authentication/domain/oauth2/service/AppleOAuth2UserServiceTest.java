@@ -103,13 +103,10 @@ class AppleOAuth2UserServiceTest {
         MockHttpServletRequest request = new MockHttpServletRequest();
 
         // when
-        assertThatThrownBy(() -> appleOAuth2UserService.authenticateWithApple(request))
-                .isInstanceOf(AppleCodeNotFoundException.class)
-                .hasFieldOrPropertyWithValue("status", 404)
-                .hasFieldOrPropertyWithValue("errorCode", "A-06")
-                .hasFieldOrPropertyWithValue("errorMessage", "Apple 인증 코드를 찾을 수 없습니다.");
+        String redirectUrl = appleOAuth2UserService.authenticateWithApple(request);
 
         // then
+        assertEquals("kr.mybrary://?errorCode=A-06&errorMessage=Apple_Code_Not_Found", redirectUrl);
         verify(appleOAuth2ServiceClient, never()).getAppleToken(anyString(), anyString(), anyString(), anyString(), anyString());
     }
 
@@ -133,13 +130,11 @@ class AppleOAuth2UserServiceTest {
         given(objectMapper.convertValue(any(), (Class<Object>) any())).willReturn(mock(JSONObject.class));
         given(userRepository.findBySocialTypeAndSocialId(any(), any())).willReturn(Optional.empty());
 
-        // then
-        assertThatThrownBy(() -> appleOAuth2UserService.authenticateWithApple(request))
-                .isInstanceOf(AppleUserNotFoundException.class)
-                .hasFieldOrPropertyWithValue("status", 404)
-                .hasFieldOrPropertyWithValue("errorCode", "A-05")
-                .hasFieldOrPropertyWithValue("errorMessage", "Apple 사용자를 찾을 수 없습니다.");
+        // when
+        String redirectUrl = appleOAuth2UserService.authenticateWithApple(request);
 
+        // then
+        assertEquals("kr.mybrary://?errorCode=A-05&errorMessage=Apple_User_Not_Found", redirectUrl);
         verify(appleOAuth2ServiceClient, times(1)).getAppleToken(anyString(), anyString(), anyString(), anyString(), anyString());
         verify(appleOAuth2UtilService, times(1)).createAppleClientSecret(anyString(), anyString());
         verify(objectMapper, times(1)).convertValue(any(), (Class<Object>) any());
@@ -199,13 +194,10 @@ class AppleOAuth2UserServiceTest {
         request.setParameter("user", "user");
 
         // when
-        assertThatThrownBy(() -> appleOAuth2UserService.authenticateWithApple(request))
-                .isInstanceOf(AppleCodeNotFoundException.class)
-                .hasFieldOrPropertyWithValue("status", 404)
-                .hasFieldOrPropertyWithValue("errorCode", "A-06")
-                .hasFieldOrPropertyWithValue("errorMessage", "Apple 인증 코드를 찾을 수 없습니다.");
+        String redirectUrl = appleOAuth2UserService.authenticateWithApple(request);
 
         // then
+        assertEquals("kr.mybrary://?errorCode=A-06&errorMessage=Apple_Code_Not_Found", redirectUrl);
         verify(appleOAuth2ServiceClient, never()).getAppleToken(anyString(), anyString(), anyString(), anyString(), anyString());
     }
 
@@ -219,13 +211,10 @@ class AppleOAuth2UserServiceTest {
         given(objectMapper.readValue("user", AppleOAuth2UserInfo.class)).willThrow(JsonProcessingException.class);
 
         // when
-        assertThatThrownBy(() -> appleOAuth2UserService.authenticateWithApple(request))
-                .isInstanceOf(AppleUserInfoReadException.class)
-                .hasFieldOrPropertyWithValue("status", 500)
-                .hasFieldOrPropertyWithValue("errorCode", "A-10")
-                .hasFieldOrPropertyWithValue("errorMessage", "Apple 사용자 정보를 읽어오는데 실패했습니다.");
+        String redirectUrl = appleOAuth2UserService.authenticateWithApple(request);
 
         // then
+        assertEquals("kr.mybrary://?errorCode=A-10&errorMessage=Apple_User_Info_Read_Error", redirectUrl);
         verify(appleOAuth2ServiceClient, never()).getAppleToken(anyString(), anyString(), anyString(), anyString(), anyString());
         verify(objectMapper, times(1)).readValue("user", AppleOAuth2UserInfo.class);
     }
