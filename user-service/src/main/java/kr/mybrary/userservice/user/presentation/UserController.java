@@ -178,4 +178,15 @@ public class UserController {
         );
     }
 
+    @PostMapping("/report-user")
+    public ResponseEntity<SuccessResponse<Void>> reportUser(
+            @RequestHeader("USER-ID") String loginId,
+            @RequestBody ReportUserRequest reportUserRequest) {
+        userService.reportUser(ReportUserServiceRequest.of(loginId, reportUserRequest.getReportedUserId(), reportUserRequest.getReportReason()));
+
+        return ResponseEntity.ok().body(
+                SuccessResponse.of(HttpStatus.OK.toString(), "사용자 신고가 정상적으로 접수되었습니다.", null)
+        );
+    }
+
 }
