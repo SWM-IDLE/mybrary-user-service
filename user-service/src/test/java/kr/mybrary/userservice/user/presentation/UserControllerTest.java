@@ -27,10 +27,7 @@ import kr.mybrary.userservice.user.domain.UserService;
 import kr.mybrary.userservice.user.domain.dto.request.*;
 import kr.mybrary.userservice.user.domain.dto.response.*;
 import kr.mybrary.userservice.user.persistence.Role;
-import kr.mybrary.userservice.user.presentation.dto.request.FollowRequest;
-import kr.mybrary.userservice.user.presentation.dto.request.FollowerRequest;
-import kr.mybrary.userservice.user.presentation.dto.request.ProfileUpdateRequest;
-import kr.mybrary.userservice.user.presentation.dto.request.SignUpRequest;
+import kr.mybrary.userservice.user.presentation.dto.request.*;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -1092,6 +1089,64 @@ class UserControllerTest {
                                         fieldWithPath("data.userInfoElements[].profileImageUrl").type(JsonFieldType.STRING).description("조회된 사용자의 프로필 이미지 URL")
                                 )
                                 .build()
+                ))
+        );
+    }
+
+    @DisplayName("사용자를 신고한다.")
+    @Test
+    void reportUser() throws Exception {
+        // given
+        doNothing().when(userService).reportUser(any(ReportUserServiceRequest.class));
+        ReportUserRequest reportUserRequest = ReportUserRequest.builder()
+                .reportedUserId("reportedUserId")
+                .reportReason("reportReason")
+                .build();
+
+        // when
+        ResultActions actions = mockMvc.perform(
+                RestDocumentationRequestBuilders.post(BASE_URL + "/report-user")
+                        .header("USER-ID", USER_ID)
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(reportUserRequest)));
+
+        // then
+        actions
+                .andExpect(status().is2xxSuccessful())
+                .andExpect(jsonPath("$.status").value(HttpStatus.OK.toString()))
+                .andExpect(jsonPath("$.message").value("사용자 신고가 정상적으로 접수되었습니다."))
+                .andExpect(jsonPath("$.data").isEmpty());
+
+        verify(userService).reportUser(any(ReportUserServiceRequest.class));
+
+        // docs
+        actions.andDo(document("report-user",
+                preprocessRequest(prettyPrint()),
+                preprocessResponse(prettyPrint()),
+                resource(
+                        ResourceSnippetParameters.builder()
+                                .tag("report-user")
+                                .summary("사용자를 신고한다.")
+                                .requestHeaders(
+                                        headerWithName("USER-ID").description("로그인 된 사용자의 아이디")
+                                )
+                                .requestSchema(Schema.schema("report_user_request_body"))
+                                .requestFields(
+                                        fieldWithPath("reportedUserId").type(JsonFieldType.STRING).description("신고할 사용자의 아이디"),
+                                        fieldWithPath("reportReason").type(JsonFieldType.STRING).description("신고 사유")
+                                )
+                                .responseSchema(Schema.schema("report_user_response_body"))
+                                .responseFields(
+                                        fieldWithPath("status").type(JsonFieldType.STRING)
+                                                .description(STATUS_FIELD_DESCRIPTION),
+                                        fieldWithPath("message").type(JsonFieldType.STRING)
+                                                .description(MESSAGE_FIELD_DESCRIPTION),
+                                        fieldWithPath("data").type(JsonFieldType.OBJECT)
+                                                .description("응답 데이터").optional()
+                                )
+                                .build()
+
                 ))
         );
     }
