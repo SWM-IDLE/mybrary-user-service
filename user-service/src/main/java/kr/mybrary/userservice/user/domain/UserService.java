@@ -39,4 +39,6 @@ public interface UserService {
 
     UserInfoServiceResponse getUserInfo(UserInfoServiceRequest serviceRequest);
 
+    void reportUser(ReportUserServiceRequest serviceRequest);
+
 }
