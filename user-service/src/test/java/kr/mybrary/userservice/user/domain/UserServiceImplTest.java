@@ -10,6 +10,8 @@ import kr.mybrary.userservice.user.domain.exception.profile.ProfileImageFileSize
 import kr.mybrary.userservice.user.domain.exception.profile.ProfileImageSizeOptionNotSupportedException;
 import kr.mybrary.userservice.user.domain.exception.profile.ProfileImageUrlNotFoundException;
 import kr.mybrary.userservice.user.domain.exception.profile.ProfileUpdateRequestNotAuthenticated;
+import kr.mybrary.userservice.user.domain.exception.report.EmptyReportReasonException;
+import kr.mybrary.userservice.user.domain.exception.report.SameReporterReportedUserException;
 import kr.mybrary.userservice.user.domain.exception.user.DuplicateLoginIdException;
 import kr.mybrary.userservice.user.domain.exception.user.DuplicateNicknameException;
 import kr.mybrary.userservice.user.domain.exception.user.UserNotFoundException;
@@ -959,6 +961,95 @@ class UserServiceImplTest {
         verify(userRepository).findAllUserInfoByLoginIds(Arrays.asList("userId1", "userId2", "userId3"));
         verify(userRepository, times(3)).findByLoginId(anyString());
         verify(storageService, times(6)).getPathFromUrl(anyString());
+    }
+
+    @Test
+    @DisplayName("사용자를 신고한다")
+    void reportUser() {
+        // Given
+        User reporterUser = UserFixture.REPORTER_USER.getUser();
+        User reportedUser = UserFixture.REPORTED_USER.getUser();
+
+        ReportUserServiceRequest serviceRequest = ReportUserServiceRequest.builder()
+                .reporterUserId("reporterUserId")
+                .reportedUserId("reportedUserId")
+                .reportReason("신고 사유")
+                .build();
+
+        given(userRepository.findByLoginId("reporterUserId")).willReturn(Optional.of(reporterUser));
+        given(userRepository.findByLoginId("reportedUserId")).willReturn(Optional.of(reportedUser));
+
+        // When
+        userService.reportUser(serviceRequest);
+
+        // Then
+        assertAll(
+                () -> assertThat(reporterUser.getUserReports()).hasSize(1),
+                () -> assertThat(reporterUser.getUserReports().get(0).getReporter()).isEqualTo(reporterUser),
+                () -> assertThat(reporterUser.getUserReports().get(0).getReported()).isEqualTo(reportedUser),
+                () -> assertThat(reporterUser.getUserReports().get(0).getReportReason()).isEqualTo("신고 사유"),
+                () -> assertThat(reportedUser.getReporteds()).hasSize(1),
+                () -> assertThat(reportedUser.getReporteds().get(0).getReporter()).isEqualTo(reporterUser),
+                () -> assertThat(reportedUser.getReporteds().get(0).getReported()).isEqualTo(reportedUser),
+                () -> assertThat(reportedUser.getReporteds().get(0).getReportReason()).isEqualTo("신고 사유")
+        );
+
+        verify(userRepository).findByLoginId("reporterUserId");
+        verify(userRepository).findByLoginId("reportedUserId");
+    }
+
+    @Test
+    @DisplayName("사용자가 자기 자신을 신고하면 예외를 던진다")
+    void reportUserSelf() {
+        // Given
+        User reporterUser = UserFixture.REPORTED_USER.getUser();
+
+        ReportUserServiceRequest serviceRequest = ReportUserServiceRequest.builder()
+                .reporterUserId("reporterUserId")
+                .reportedUserId("reporterUserId")
+                .reportReason("신고 사유")
+                .build();
+
+        given(userRepository.findByLoginId("reporterUserId")).willReturn(Optional.of(reporterUser));
+        given(userRepository.findByLoginId("reporterUserId")).willReturn(Optional.of(reporterUser));
+
+        // When
+        assertThatThrownBy(() -> userService.reportUser(serviceRequest))
+                .isInstanceOf(SameReporterReportedUserException.class)
+                .hasFieldOrPropertyWithValue("status", 400)
+                .hasFieldOrPropertyWithValue("errorCode", "UR-01")
+                .hasFieldOrPropertyWithValue("errorMessage", "자기 자신을 신고할 수 없습니다.");
+
+        // Then
+        verify(userRepository, times(2)).findByLoginId("reporterUserId");
+    }
+
+    @Test
+    @DisplayName("사용자를 신고할 때 신고 사유가 없으면 예외를 던진다")
+    void reportUserWithEmptyReportReason() {
+        // Given
+        User reporterUser = UserFixture.REPORTED_USER.getUser();
+        User reportedUser = UserFixture.REPORTED_USER.getUser();
+
+        ReportUserServiceRequest serviceRequest = ReportUserServiceRequest.builder()
+                .reporterUserId("reporterUserId")
+                .reportedUserId("reportedUserId")
+                .reportReason(null)
+                .build();
+
+        given(userRepository.findByLoginId("reporterUserId")).willReturn(Optional.of(reporterUser));
+        given(userRepository.findByLoginId("reportedUserId")).willReturn(Optional.of(reportedUser));
+
+        // When
+        assertThatThrownBy(() -> userService.reportUser(serviceRequest))
+                .isInstanceOf(EmptyReportReasonException.class)
+                .hasFieldOrPropertyWithValue("status", 400)
+                .hasFieldOrPropertyWithValue("errorCode", "UR-02")
+                .hasFieldOrPropertyWithValue("errorMessage", "신고 사유가 없습니다. 신고 사유를 입력해주세요.");
+
+        // Then
+        verify(userRepository).findByLoginId("reporterUserId");
+        verify(userRepository).findByLoginId("reportedUserId");
     }
 
 }
