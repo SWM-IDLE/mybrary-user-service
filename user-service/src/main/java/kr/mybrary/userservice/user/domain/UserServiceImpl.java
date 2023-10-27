@@ -10,6 +10,8 @@ import kr.mybrary.userservice.user.domain.exception.follow.DuplicateFollowExcept
 import kr.mybrary.userservice.user.domain.exception.follow.SameSourceTargetUserException;
 import kr.mybrary.userservice.user.domain.exception.profile.ProfileImageSizeOptionNotSupportedException;
 import kr.mybrary.userservice.user.domain.exception.profile.ProfileUpdateRequestNotAuthenticated;
+import kr.mybrary.userservice.user.domain.exception.report.EmptyReportReasonException;
+import kr.mybrary.userservice.user.domain.exception.report.SameReporterReportedUserException;
 import kr.mybrary.userservice.user.domain.exception.user.DuplicateLoginIdException;
 import kr.mybrary.userservice.user.domain.exception.user.DuplicateNicknameException;
 import kr.mybrary.userservice.user.domain.exception.io.EmptyFileException;
@@ -391,6 +393,29 @@ public class UserServiceImpl implements UserService {
                         .profileImageUrl(getResizedProfileImageUrl(getUser(userInfoModel.getLoginId()), PROFILE_IMAGE_SIZE_TINY))
                         .build())
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public void reportUser(ReportUserServiceRequest serviceRequest) {
+        User reporterUser = getUser(serviceRequest.getReporterUserId());
+        User reportedUser = getUser(serviceRequest.getReportedUserId());
+
+        validateDifferentReporterReported(reporterUser, reportedUser);
+        validateReportReason(serviceRequest);
+
+        reporterUser.reportUser(reportedUser, serviceRequest.getReportReason());
+    }
+
+    private void validateDifferentReporterReported(User reporterUser, User reportedUser) {
+        if(reporterUser.equals(reportedUser)) {
+            throw new SameReporterReportedUserException();
+        }
+    }
+
+    private void validateReportReason(ReportUserServiceRequest serviceRequest) {
+        if(serviceRequest.getReportReason() == null) {
+            throw new EmptyReportReasonException();
+        }
     }
 
 }

@@ -71,6 +71,12 @@ public class User extends BaseEntity {
     @OneToMany(mappedBy = "source", cascade = CascadeType.PERSIST, orphanRemoval = true)
     private List<Follow> followings;
 
+    @OneToMany(mappedBy = "reported", cascade = CascadeType.PERSIST, orphanRemoval = true)
+    private List<UserReport> userReports;
+
+    @OneToMany(mappedBy = "reporter", cascade = CascadeType.PERSIST, orphanRemoval = true)
+    private List<UserReport> reporteds;
+
     // 주소, 직장, 직장 공개 여부, 성별, 생년월일, 학력, 본인인증 여부 추가 예정
 
     public void updateRole(Role role) {
@@ -109,6 +115,17 @@ public class User extends BaseEntity {
             .build();
         this.followings.add(follow);
         target.followers.add(follow);
+    }
+
+    public void reportUser(User reportedUser, String reportReason) {
+        UserReport userReport = UserReport.builder()
+            .reporter(this)
+            .reported(reportedUser)
+            .reportReason(reportReason)
+            .reportStatus(ReportStatus.WAITING)
+            .build();
+        this.userReports.add(userReport);
+        reportedUser.reporteds.add(userReport);
     }
 
     // TODO: 팔로우를 soft delete 해야하는지 고민해보기
