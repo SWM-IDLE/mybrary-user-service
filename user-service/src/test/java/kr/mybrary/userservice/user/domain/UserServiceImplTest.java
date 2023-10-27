@@ -16,6 +16,7 @@ import kr.mybrary.userservice.user.domain.exception.user.DuplicateLoginIdExcepti
 import kr.mybrary.userservice.user.domain.exception.user.DuplicateNicknameException;
 import kr.mybrary.userservice.user.domain.exception.user.UserNotFoundException;
 import kr.mybrary.userservice.user.domain.storage.StorageService;
+import kr.mybrary.userservice.user.persistence.ReportStatus;
 import kr.mybrary.userservice.user.persistence.Role;
 import kr.mybrary.userservice.user.persistence.User;
 import kr.mybrary.userservice.user.persistence.model.FollowUserInfoModel;
@@ -988,10 +989,12 @@ class UserServiceImplTest {
                 () -> assertThat(reporterUser.getUserReports().get(0).getReporter()).isEqualTo(reporterUser),
                 () -> assertThat(reporterUser.getUserReports().get(0).getReported()).isEqualTo(reportedUser),
                 () -> assertThat(reporterUser.getUserReports().get(0).getReportReason()).isEqualTo("신고 사유"),
+                () -> assertThat(reporterUser.getUserReports().get(0).getReportStatus().getDescription()).isEqualTo(ReportStatus.WAITING.getDescription()),
                 () -> assertThat(reportedUser.getReporteds()).hasSize(1),
                 () -> assertThat(reportedUser.getReporteds().get(0).getReporter()).isEqualTo(reporterUser),
                 () -> assertThat(reportedUser.getReporteds().get(0).getReported()).isEqualTo(reportedUser),
-                () -> assertThat(reportedUser.getReporteds().get(0).getReportReason()).isEqualTo("신고 사유")
+                () -> assertThat(reportedUser.getReporteds().get(0).getReportReason()).isEqualTo("신고 사유"),
+                () -> assertThat(reportedUser.getReporteds().get(0).getReportStatus().getDescription()).isEqualTo(ReportStatus.WAITING.getDescription())
         );
 
         verify(userRepository).findByLoginId("reporterUserId");
