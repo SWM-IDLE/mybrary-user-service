@@ -14,27 +14,24 @@ import software.amazon.awssdk.services.sns.model.PublishResponse;
 @RequiredArgsConstructor
 public class SnsEventPublisher {
 
+    private final static String MESSAGE_SUBJECT = "USER SERVICE REQUEST";
     private final AwsSnsConfig awsConfig;
     private final ObjectMapper objectMapper;
 
-    public PublishResponse publishToSns(Map<String, Object> messageData, SnsTopic topic) {
-
-        String messageJson;
+    public void publishToSns(Map<String, Object> messageData, SnsTopic topic) {
 
         try {
-            messageJson = objectMapper.writeValueAsString(messageData);
+            PublishRequest publishRequest = PublishRequest.builder()
+                    .topicArn(awsConfig.getTopicArn() + topic.getTopicName())
+                    .subject(MESSAGE_SUBJECT)
+                    .message(objectMapper.writeValueAsString(messageData))
+                    .build();
+
+            SnsClient snsClient = awsConfig.getSnsClient();
+            snsClient.publish(publishRequest);
+
         } catch (JsonProcessingException e) {
             throw new RuntimeException("Failed to convert message data to JSON", e);
         }
-
-        PublishRequest publishRequest = PublishRequest.builder()
-                .topicArn(awsConfig.getTopicArn() + topic.getTopicName())
-                .subject("userService request")
-                .message(messageJson)
-                .build();
-
-        SnsClient snsClient = awsConfig.getSnsClient();
-        return snsClient.publish(publishRequest);
     }
-
 }
