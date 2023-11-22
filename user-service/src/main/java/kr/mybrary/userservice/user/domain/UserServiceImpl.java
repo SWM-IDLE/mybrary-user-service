@@ -2,6 +2,9 @@ package kr.mybrary.userservice.user.domain;
 
 import jakarta.validation.constraints.NotNull;
 import kr.mybrary.userservice.authentication.domain.oauth2.service.AppleOAuth2UserService;
+import kr.mybrary.userservice.global.publisher.SnsEventPublisher;
+import kr.mybrary.userservice.global.publisher.SnsTopic;
+import kr.mybrary.userservice.global.publisher.message.SnsMessageCreator;
 import kr.mybrary.userservice.global.util.MultipartFileUtil;
 import kr.mybrary.userservice.user.domain.dto.UserMapper;
 import kr.mybrary.userservice.user.domain.dto.request.*;
@@ -45,6 +48,8 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final StorageService storageService;
     private final AppleOAuth2UserService appleOAuth2UserService;
+    private final SnsEventPublisher snsEventPublisher;
+
     private static final String PROFILE_IMAGE_PATH_FORMAT = "profile/profileImage/%s/";
     private static final int MAX_PROFILE_IMAGE_SIZE = 5 * 1024 * 1024;
     private static final String PROFILE_IMAGE_SIZE_TINY = "tiny";
@@ -300,6 +305,7 @@ public class UserServiceImpl implements UserService {
         validateDuplicateFollow(sourceUser, targetUser);
 
         sourceUser.follow(targetUser);
+        snsEventPublisher.publishToSns(SnsMessageCreator.createFollowMessage(sourceUser, targetUser), SnsTopic.FOLLOW);
     }
 
     private void validateDifferentSourceTarget(User source, User target) {
