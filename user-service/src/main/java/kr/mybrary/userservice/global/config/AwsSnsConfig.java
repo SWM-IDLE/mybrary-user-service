@@ -24,7 +24,7 @@ public class AwsSnsConfig {
     @Value("${spring.cloud.aws.sns.region.static}")
     private String region;
 
-    @Value("${spring.cloud.aws.sns,topic.arn}")
+    @Value("${spring.cloud.aws.sns.topic.arn}")
     private String topicArn;
 
     @Bean
