@@ -16,8 +16,8 @@ public class SnsMessageCreator {
     public static Map<String, Object> createFollowMessage(User sourceUser, User targetUser) {
 
         return new HashMap<>(){{
-            put("sourceUserId", sourceUser.getId());
-            put("targetUserId", targetUser.getId());
+            put("sourceUserId", sourceUser.getLoginId());
+            put("targetUserId", targetUser.getLoginId());
             put("targetUserNickname", targetUser.getNickname());
             put("targetUserProfileImageUrl", targetUser.getProfileImageUrl());
         }};
