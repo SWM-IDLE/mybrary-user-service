@@ -15,16 +15,16 @@ import software.amazon.awssdk.services.sns.SnsClient;
 @Getter
 public class AwsSnsConfig {
 
-    @Value("${spring.cloud.aws.sns,credentials.access-key}")
+    @Value("${spring.cloud.aws.sns.credentials.access-key}")
     private String accessKey;
 
-    @Value("${spring.cloud.aws.sns,credentials.secret-key}")
+    @Value("${spring.cloud.aws.sns.credentials.secret-key}")
     private String secretKey;
 
-    @Value("${spring.cloud.aws.sns,region.static}")
+    @Value("${spring.cloud.aws.sns.region.static}")
     private String region;
 
-    @Value("${spring.cloud.aws.sns.topic.arn}")
+    @Value("${spring.cloud.aws.sns,topic.arn}")
     private String topicArn;
 
     @Bean
