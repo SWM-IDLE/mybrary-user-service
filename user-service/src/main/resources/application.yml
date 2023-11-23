@@ -111,6 +111,15 @@ spring:
       stack:
         auto: false
 
+      sns:
+        credentials:
+          access-key: ${AWS_SNS_ACCESS_KEY}
+          secret-key: ${AWS_SNS_SECRET_KEY}
+        region:
+          static: ${AWS_SNS_REGION}
+        topic:
+          arn: ${AWS_SNS_TOPIC_ARN}
+
     openfeign:
       client:
         config:
@@ -146,13 +155,3 @@ springdoc:
   swagger-ui:
     url: /docs/user-service.json
     path: /docs/swagger
-
-aws:
-  sns:
-    credentials:
-      access-key: ${AWS_SNS_ACCESS_KEY}
-      secret-key: ${AWS_SNS_SECRET_KEY}
-    region:
-      static: ${AWS_SNS_REGION}
-    topic:
-      arn: ${AWS_SNS_TOPIC_ARN}
