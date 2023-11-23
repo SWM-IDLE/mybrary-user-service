@@ -45,6 +45,10 @@ jobs:
           spring.cloud.aws.credentials.secret-key: ${{ secrets.AWS_SECRET_KEY }}
           spring.cloud.openfeign.client.config.bookClient.url: ${{ secrets.BOOK_CLIENT_URL }}
           jwt.secretKey: ${{ secrets.JWT_SECRET_KEY }}
+          aws.sns.credentials.access-key: ${{ secrets.AWS_SNS_ACCESS_KEY }}
+          aws.sns.credentials.secret-key: ${{ secrets.AWS_SNS_SECRET_KEY }}
+          aws.sns.region.static: ${{ secrets.AWS_SNS_REGION }}
+          aws.sns.topic.arn: ${{ secrets.AWS_SNS_TOPIC_ARN }}
       - name: Setup Bootstrap Yaml
         uses: microsoft/variable-substitution@v1
         with:
