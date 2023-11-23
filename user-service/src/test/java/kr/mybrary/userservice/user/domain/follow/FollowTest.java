@@ -1,5 +1,6 @@
 package kr.mybrary.userservice.user.domain.follow;
 
+import kr.mybrary.userservice.global.publisher.SnsEventPublisher;
 import kr.mybrary.userservice.user.domain.UserServiceImpl;
 import kr.mybrary.userservice.user.domain.dto.request.FollowServiceRequest;
 import kr.mybrary.userservice.user.domain.dto.request.FollowerServiceRequest;
@@ -25,7 +26,10 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -35,6 +39,9 @@ public class FollowTest {
 
     @Mock
     UserRepository userRepository;
+
+    @Mock
+    SnsEventPublisher snsEventPublisher;
 
     @InjectMocks
     UserServiceImpl userService;
@@ -67,6 +74,7 @@ public class FollowTest {
         // given
         given(userRepository.findByLoginId(userA.getLoginId())).willReturn(Optional.of(userA));
         given(userRepository.findByLoginId(userB.getLoginId())).willReturn(Optional.of(userB));
+        doNothing().when(snsEventPublisher).publishToSns(any(), any());
 
         // when
         userService.follow(FollowServiceRequest.of(userA.getLoginId(), userB.getLoginId()));
@@ -83,6 +91,7 @@ public class FollowTest {
 
         verify(userRepository).findByLoginId(userA.getLoginId());
         verify(userRepository).findByLoginId(userB.getLoginId());
+        verify(snsEventPublisher).publishToSns(any(), any());
     }
 
     @Test
@@ -139,6 +148,7 @@ public class FollowTest {
         // given
         given(userRepository.findByLoginId(userC.getLoginId())).willReturn(Optional.of(userC));
         given(userRepository.findByLoginId(userB.getLoginId())).willReturn(Optional.of(userB));
+        doNothing().when(snsEventPublisher).publishToSns(any(), any());
 
         // when
         userService.follow(FollowServiceRequest.of(userC.getLoginId(), userB.getLoginId()));
@@ -155,6 +165,7 @@ public class FollowTest {
 
         verify(userRepository).findByLoginId(userC.getLoginId());
         verify(userRepository).findByLoginId(userB.getLoginId());
+        verify(snsEventPublisher).publishToSns(any(), any());
     }
 
     @Test
@@ -174,6 +185,7 @@ public class FollowTest {
 
         verify(userRepository).findByLoginId(userC.getLoginId());
         verify(userRepository).findByLoginId(userB.getLoginId());
+        verify(snsEventPublisher, never()).publishToSns(any(), any());
     }
 
     @Test
@@ -323,6 +335,7 @@ public class FollowTest {
                 .hasFieldOrPropertyWithValue("errorMessage", "자기 자신을 팔로우 또는 언팔로우할 수 없습니다.");
 
         verify(userRepository, times(2)).findByLoginId(userA.getLoginId());
+        verify(snsEventPublisher, never()).publishToSns(any(), any());
     }
 
     @Test
@@ -342,6 +355,7 @@ public class FollowTest {
 
         verify(userRepository).findByLoginId(userA.getLoginId());
         verify(userRepository).findByLoginId("nonExistUser");
+        verify(snsEventPublisher, never()).publishToSns(any(), any());
     }
 
 }

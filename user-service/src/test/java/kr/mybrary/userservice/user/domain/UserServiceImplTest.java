@@ -1,6 +1,7 @@
 package kr.mybrary.userservice.user.domain;
 
 import kr.mybrary.userservice.authentication.domain.oauth2.service.AppleOAuth2UserService;
+import kr.mybrary.userservice.global.publisher.SnsEventPublisher;
 import kr.mybrary.userservice.user.UserFixture;
 import kr.mybrary.userservice.user.UserTestData;
 import kr.mybrary.userservice.user.domain.dto.request.*;
@@ -53,6 +54,8 @@ class UserServiceImplTest {
     StorageService storageService;
     @Mock
     AppleOAuth2UserService appleOAuth2UserService;
+    @Mock
+    SnsEventPublisher snsEventPublisher;
     @InjectMocks
     UserServiceImpl userService;
 

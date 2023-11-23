@@ -44,6 +44,15 @@ spring:
   cloud:
     config:
       enabled: false
+    aws:
+      sns:
+        credentials:
+          access-key: snsAccessKey
+          secret-key: snsSecretKey
+        region:
+          static: snsRegion
+        topic:
+          arn: snsTopicArn
 
 logging:
   level:
