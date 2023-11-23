@@ -47,12 +47,12 @@ spring:
     aws:
       sns:
         credentials:
-          access-key: ${AWS_SNS_ACCESS_KEY}
-          secret-key: ${AWS_SNS_SECRET_KEY}
+          access-key: snsAccessKey
+          secret-key: snsSecretKey
         region:
-          static: ${AWS_SNS_REGION}
+          static: snsRegion
         topic:
-          arn: ${AWS_SNS_TOPIC_ARN}
+          arn: snsTopicArn
 
 logging:
   level:
