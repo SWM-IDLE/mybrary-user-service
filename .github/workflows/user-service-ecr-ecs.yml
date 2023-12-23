@@ -105,12 +105,12 @@ jobs:
           container-name: userService
           image: ${{ steps.build-image.outputs.image }}
 
-      - name: Deploy Amazon ECS task definition
-        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
-        with:
-          task-definition: ${{ steps.task-def.outputs.task-definition }}
-          service: userService-EcsService
-          cluster: MybraryCluster
-          codedeploy-deployment-group: DgpECS-MybraryCluster-userService-EcsService
-          codedeploy-appspec: ./user-service/appspec.yaml
-          wait-for-service-stability: true
+      # - name: Deploy Amazon ECS task definition
+      #   uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+      #   with:
+      #     task-definition: ${{ steps.task-def.outputs.task-definition }}
+      #     service: userService-EcsService
+      #     cluster: MybraryCluster
+      #     codedeploy-deployment-group: DgpECS-MybraryCluster-userService-EcsService
+      #     codedeploy-appspec: ./user-service/appspec.yaml
+      #     wait-for-service-stability: true
