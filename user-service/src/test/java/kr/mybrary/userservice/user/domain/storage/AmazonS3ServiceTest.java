@@ -30,8 +30,8 @@ class AmazonS3ServiceTest {
     @InjectMocks
     AmazonS3Service amazonS3Service;
 
-    private static final String BASE_URL = "https://mybrary-user-service.s3.ap-northeast-2.amazonaws.com/";
-    private static final String RESIZED_BASE_URL = "https://mybrary-user-service-resized.s3.ap-northeast-2.amazonaws.com/";
+    private static final String BASE_URL = "https://mybrary-user.s3.ap-northeast-2.amazonaws.com/";
+    private static final String RESIZED_BASE_URL = "https://mybrary-user-resized.s3.ap-northeast-2.amazonaws.com/";
 
     @Test
     @DisplayName("파일을 업로드한다.")
@@ -125,7 +125,7 @@ class AmazonS3ServiceTest {
     @DisplayName("리사이징된 파일의 url을 반환한다.")
     void getResizedFileUrl() {
         // given
-        String url = "https://mybrary-user-service.s3.ap-northeast-2.amazonaws.com/path";
+        String url = "https://mybrary-user.s3.ap-northeast-2.amazonaws.com/path";
         String size = "small";
 
         // when

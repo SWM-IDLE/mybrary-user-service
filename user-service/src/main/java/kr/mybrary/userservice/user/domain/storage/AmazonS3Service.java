@@ -22,8 +22,8 @@ public class AmazonS3Service implements StorageService {
     @Value("${spring.cloud.aws.s3.bucket}")
     private String bucketName;
     private static final String RESIZED_POSTFIX = "-resized";
-    private static final String BASE_URL = "https://mybrary-user-service.s3.ap-northeast-2.amazonaws.com/";
-    private static final String RESIZED_BASE_URL = "https://mybrary-user-service-resized.s3.ap-northeast-2.amazonaws.com/";
+    private static final String BASE_URL = "https://mybrary-user.s3.ap-northeast-2.amazonaws.com/";
+    private static final String RESIZED_BASE_URL = "https://mybrary-user-resized.s3.ap-northeast-2.amazonaws.com/";
 
     @Override
     public String putFile(MultipartFile multipartFile, String path) {
