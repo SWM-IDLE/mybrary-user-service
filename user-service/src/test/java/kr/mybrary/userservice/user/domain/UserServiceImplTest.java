@@ -62,7 +62,7 @@ class UserServiceImplTest {
     static final String LOGIN_ID = "loginId";
     static final String FOLLOWING_ID = "followingId";
     static final String FOLLOWER_ID = "followerId";
-    static final String PROFILE_IMAGE_BASE_URL = "https://mybrary-user-service.s3.ap-northeast-2.amazonaws.com/profile/profileImage/";
+    static final String PROFILE_IMAGE_BASE_URL = "https://mybrary-user.s3.ap-northeast-2.amazonaws.com/profile/profileImage/";
 
     @Test
     @DisplayName("회원가입 요청이 들어오면 암호화된 비밀번호와 함께 회원 권한으로 사용자 정보를 저장한다")
